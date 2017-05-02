@@ -1,5 +1,5 @@
 open Graphics
-open Unix
+open Thread
 
 open Mlgrope
 
@@ -39,7 +39,7 @@ let rec loop g =
 	(* TODO: call backend *)
 	draw g.state;
 	Graphics.synchronize ();
-	Unix.sleepf (1. /. 60.);
+	Thread.delay (1. /. 60.);
 	loop g
 
 let () =
