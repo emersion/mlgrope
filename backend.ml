@@ -23,22 +23,11 @@ let dot v1 v2  =
 let ( * ) s v  = 
 	{ x = s *. v.x; y = s *. v.y }
 
+let abs x = if x >= 0.0 then x else -. x
+
 let print_vector v =
 	print_string ("x = "); print_float v.x;
 	print_string " y = "; print_float v.y
-
-
-let ball_move b dt =
-	(* Compute new pos *)
-	let nspeed = b.speed + dt * b.accel in
-	let newB = { b with speed  = nspeed; position = b.position + dt * nspeed } in
-
-	(* Check for collision*)
-
-	(* Respond to collision *)
-
-	(* Update position & speed *)
-	newB
 
 let check_collision b ent =
 		match ent with
@@ -46,20 +35,37 @@ let check_collision b ent =
 			let dist = (g.position.x -. b.position.x)**2.  +. (g.position.y -. b.position.y)**2. in
 			if Mlgrope.ball_radius**2.0 >= dist
 			then raise (CollisionException (Goal g))
-			else false
 		| Bubble(bu) ->
 			let dist = (bu.position.x -. b.position.x)**2.  +. (bu.position.y -. b.position.y)**2. in
 			if (Mlgrope.ball_radius +. bu.radius)**2. >= dist
 			then raise (CollisionException (Bubble bu))
-			else false
-		| _ -> false
+		| _ -> ()
 
 let rec check_collisions b entl =
 		match entl with
-		| [] -> false
-		| e::s -> (check_collision b e) || (check_collisions b s) 
+		| [] -> ()
+		| e::s -> (check_collision b e) ; (check_collisions b s) 
+
+let ball_move g dt =
+	(* Compute new pos *)
+	let b = g.ball in
+	let newSpeed = b.speed + dt * b.accel in
+	let newB = { b with speed  = newSpeed; position = b.position + dt * newSpeed } in
+
+	(* Check for collision *)
+	let newB = try check_collisions b g.entities; newB with
+		| CollisionException (Goal go) -> raise TouchedGoalException
+		| CollisionException (Bubble bu) ->
+			let newAcc = { x = newB.accel.x; y = abs(newB.accel.y) } in
+			{ newB with accel = newAcc }
+	in
+	(* Respond to collision *)
+
+	(* Update position & speed *)
+	newB 
+
 
 let move g dt =
-	let b = (ball_move g.ball dt) in
+	let b = (ball_move g dt) in
 	if b.position.y <= 0. then raise OutOfBoundsException
 	else { g with ball = b }
