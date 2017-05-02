@@ -1,4 +1,7 @@
-type vec = float * float
+type vec = {
+	x : float;
+	y : float;
+}
 
 type bubble = {
 	position : vec;
