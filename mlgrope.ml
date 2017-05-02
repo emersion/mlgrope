@@ -13,9 +13,14 @@ type rope = {
 	radius : float;
 }
 
+type goal = {
+	position : vec;
+}
+
 type entity =
 	| Bubble of bubble
 	| Rope of rope
+	| Goal of goal
 
 type ball = {
 	position : vec;
