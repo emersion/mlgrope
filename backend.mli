@@ -1,5 +1,7 @@
 open Mlgrope
 
-exception OutOfBoundsException (* sava *)
+exception OutOfBoundsException
+exception TouchedGoalException
+
 
 val move : Mlgrope.game_state -> float -> Mlgrope.game_state
