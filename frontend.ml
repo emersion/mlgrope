@@ -1,9 +1,11 @@
 open Graphics
-open Thread
+open Sys
+open Unix
 
 open Mlgrope
+open Backend
 
-let ball_radius = 10.0
+let tick_rate = 1. /. 60.
 
 let draw_ball (b : ball) =
 	Graphics.set_color Graphics.black;
@@ -31,16 +33,15 @@ let draw s =
 	draw_ball s.ball;
 	draw_entities s.entities
 
-let rec loop g =
+let step g =
 	let t = Unix.gettimeofday () in
 	let dt = t -. g.time in
 	let g = { g with time = t } in
 	Graphics.clear_graph ();
-	(* TODO: call backend *)
+	let g = { g with state = Backend.move g.state dt } in
 	draw g.state;
 	Graphics.synchronize ();
-	Thread.delay (1. /. 60.);
-	loop g
+	g
 
 let () =
 	let g = {
@@ -61,4 +62,8 @@ let () =
 	} in
 	Graphics.open_graph (" "^(string_of_int (int_of_float (g.size.x)))^"x"^(string_of_int (int_of_float (g.size.y))));
 	Graphics.auto_synchronize false;
-	loop g
+
+	Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ -> step g; ()));
+	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = tick_rate; it_value = tick_rate} in
+	let g = step g in
+	Graphics.loop_at_exit [] (fun _ -> ())
