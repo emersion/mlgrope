@@ -1,5 +1,8 @@
 open Mlgrope
 
+exception OutOfBoundsException
+exception TouchedGoalException
+
 let a  = {x = 3.0; y = 5.2}
 let b  = {x = 4.2; y = 0.3}
 
@@ -27,7 +30,7 @@ let print_vector v =
 let ball_move b dt =
 	(* Compute new pos *)
 	let nspeed = b.speed + dt * b.accel in
-	let newB = { b with speed  = nspeed; position = b.position + nspeed } in
+	let newB = { b with speed  = nspeed; position = b.position + dt * nspeed } in
 
 	(* Check for collision*)
 
@@ -38,11 +41,13 @@ let ball_move b dt =
 
 let check_collision b ent =
 		match ent with
+		| Goal(g) -> 
+			let dist = (g.position.x -. b.position.x)**2.  +. (g.position.y -. b.position.y)**2. in
+			if Mlgrope.ball_radius**2.0 >= dist then raise TouchedGoalException else false
 		| Bubble(bu) ->
-			let dist = (bu.position.x -. b.position.x)**2.0  +. (bu.position.y -. b.position.y)**2.0 in
-			(Mlgrope.ball_radius +. bu.radius)**2.0 >= dist
+			let dist = (bu.position.x -. b.position.x)**2.  +. (bu.position.y -. b.position.y)**2. in
+			(Mlgrope.ball_radius +. bu.radius)**2. >= dist
 		| _ -> false
-
 
 let rec check_collisions b entl =
 		match entl with
@@ -50,4 +55,6 @@ let rec check_collisions b entl =
 		| e::s -> (check_collision b e) || (check_collisions b s) 
 
 let move g dt =
-	{ g with ball = (ball_move g.ball dt) }
+	let b = (ball_move g.ball dt) in
+	if b.position.y <= 0. then raise OutOfBoundsException
+	else { g with ball = b }
