@@ -49,5 +49,5 @@ let rec check_collisions b entl =
 		| [] -> false
 		| e::s -> (check_collision b e) || (check_collisions b s) 
 
-let move g dt = 
-	{ g with (ball_move g.ball dt) }
+let move g dt =
+	{ g with ball = (ball_move g.ball dt) }
