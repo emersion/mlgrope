@@ -51,7 +51,7 @@ let () =
 			ball = {
 				position = {x = 200.; y = 300.};
 				speed = {x = 0.; y = 0.};
-				accel = {x = 0.; y = 0.};
+				accel = {x = 0.; y = -20.};
 				links = [];
 			};
 			entities = [
@@ -63,7 +63,7 @@ let () =
 	Graphics.open_graph (" "^(string_of_int (int_of_float (g.size.x)))^"x"^(string_of_int (int_of_float (g.size.y))));
 	Graphics.auto_synchronize false;
 
-	Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ -> step g; ()));
+	let g = ref (step g) in
+	Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ -> g := step !g));
 	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = tick_rate; it_value = tick_rate} in
-	let g = step g in
 	Graphics.loop_at_exit [] (fun _ -> ())
