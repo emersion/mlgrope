@@ -2,6 +2,7 @@ open Mlgrope
 
 exception OutOfBoundsException
 exception TouchedGoalException
+exception CollisionException of entity
 
 let a  = {x = 3.0; y = 5.2}
 let b  = {x = 4.2; y = 0.3}
@@ -43,10 +44,14 @@ let check_collision b ent =
 		match ent with
 		| Goal(g) -> 
 			let dist = (g.position.x -. b.position.x)**2.  +. (g.position.y -. b.position.y)**2. in
-			if Mlgrope.ball_radius**2.0 >= dist then raise TouchedGoalException else false
+			if Mlgrope.ball_radius**2.0 >= dist
+			then raise (CollisionException (Goal g))
+			else false
 		| Bubble(bu) ->
 			let dist = (bu.position.x -. b.position.x)**2.  +. (bu.position.y -. b.position.y)**2. in
-			(Mlgrope.ball_radius +. bu.radius)**2. >= dist
+			if (Mlgrope.ball_radius +. bu.radius)**2. >= dist
+			then raise (CollisionException (Bubble bu))
+			else false
 		| _ -> false
 
 let rec check_collisions b entl =
