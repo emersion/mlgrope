@@ -37,16 +37,14 @@ let ball_move b dt =
 	newB
 
 let check_collision b ent =
-	let ball_radius = 10.0 in 
 		match ent with
 		| Bubble(bu) ->
 			let dist = (bu.position.x -. b.position.x)**2.0  +. (bu.position.y -. b.position.y)**2.0 in
-			(ball_radius +. bu.radius)**2.0 >= dist
+			(Mlgrope.ball_radius +. bu.radius)**2.0 >= dist
 		| _ -> false
 
 
 let rec check_collisions b entl =
-	(* let ball_radius = 10.0 in *)
 		match entl with
 		| [] -> false
 		| e::s -> (check_collision b e) || (check_collisions b s) 

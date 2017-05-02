@@ -24,6 +24,8 @@ type ball = {
 	links : entity list;
 }
 
+val ball_radius : float
+
 type game_state = {
 	ball : ball;
 	entities : entity list;

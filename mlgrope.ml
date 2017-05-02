@@ -24,6 +24,8 @@ type ball = {
 	links : entity list;
 }
 
+let ball_radius = 10.0
+
 type game_state = {
 	ball : ball;
 	entities : entity list;
