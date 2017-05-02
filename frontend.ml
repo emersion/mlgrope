@@ -48,7 +48,7 @@ let rec draw_link b l =
 	match l with
 	| Rope({position}) -> let a = 0.1 in
 		let n = 10 in
-		let line = Array.init n (fun i ->
+		let line = Array.init (n+1) (fun i ->
 			let t = (float_of_int i) /. (float_of_int n) in
 			int_of_position (mix position b.position t)
 			(* TODO *)
@@ -73,7 +73,7 @@ let step g =
 	g
 
 let () =
-	let rope = {position = {x = 200.; y = 100.}; radius = 40.} in
+	let rope = {position = {x = 300.; y = 100.}; radius = 40.} in
 	let g = {
 		size = {x = 400.; y = 400.};
 		time = Unix.gettimeofday ();
@@ -81,7 +81,7 @@ let () =
 			ball = {
 				position = {x = 200.; y = 300.};
 				speed = {x = 0.; y = 0.};
-				accel = {x = 0.; y = -20.};
+				accel = {x = 0.; y = -150.};
 				links = [Rope(rope)];
 			};
 			entities = [
