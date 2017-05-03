@@ -14,9 +14,9 @@ let () =
 				links = [Rope(rope)];
 			};
 			entities = [
-				Bubble{position = {x = 100.; y = 200.}; radius = 50.};
+				Bubble{position = {x = 200.; y = 100.}; radius = 50.};
 				Rope(rope);
-				Goal{position = {x = 200.; y = 20.}};
+				Goal{position = {x = 200.; y = 350.}};
 			];
 		};
 	} in
