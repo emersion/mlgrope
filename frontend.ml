@@ -21,11 +21,6 @@ let mix v1 v2 t =
 let int_of_position p =
 	(int_of_float p.x, int_of_float p.y)
 
-let draw_ball (b : ball) =
-	let (x, y) = int_of_position b.position in
-	Graphics.set_color ball_color;
-	Graphics.fill_circle x y (int_of_float Mlgrope.ball_radius)
-
 let draw_bubble (b : bubble) =
 	let (x, y) = int_of_position b.position in
 	Graphics.set_color bubble_color;
@@ -40,6 +35,17 @@ let draw_goal (g : goal) =
 	let (x, y) = int_of_position g.position in
 	Graphics.set_color goal_color;
 	Graphics.fill_rect (x - 1) (y - 1) 2 2
+
+let draw_ball (b : ball) =
+	let (x, y) = int_of_position b.position in
+	Graphics.set_color ball_color;
+	Graphics.fill_circle x y (int_of_float Mlgrope.ball_radius);
+
+	List.iter (fun e ->
+		match e with
+		| Bubble(bubble) -> draw_bubble {bubble with position = b.position}
+		| _ -> ()
+	) b.links
 
 let draw_entity e =
 	match e with
