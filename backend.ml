@@ -35,8 +35,27 @@ let projection v1 v2 =
 	let angle = acos co in
 	{ x = tan angle *. v1.y; y = v1.y }
 
-let remove_bubble b l =
-	List.fold_left (fun acc e -> if e = b then acc else e::acc) [] l
+let remove_from_list o l = List.filter (fun e -> o != e) l
+
+(* Col = colision list, entl = entities *)
+let clear_entities col entl =
+	List.fold_left (fun acc e ->
+		match e with
+		| Bubble(bu) -> if (List.mem e col) then acc else e::acc
+		| _ -> e::acc
+		) [] entl
+
+(* Add links that needs to be added, col = collision list, l = link list *)
+(* TODO : separate in Two fun (if GP contains spikes)
+ 		* add_links
+		* remove_links
+*)
+let rec update_links col l =
+	List.fold_left (fun acc e ->
+		match e with
+		| Bubble(bu) -> e::acc
+		| _ -> acc
+		) l col
 
 let check_collision b ent =
 	match ent with
@@ -52,6 +71,7 @@ let check_collisions b entl =
 	List.fold_left (fun acc e -> if check_collision b e then e::acc else acc)
 	[] entl
 
+
 let link_entities entl b =
 	List.fold_left (fun acc e ->
 									match e with
@@ -59,10 +79,10 @@ let link_entities entl b =
 																then { acc with links = e::acc.links }
 																else acc
 									| _ -> acc
-								)
-	b entl
+								)	b entl
 
-(* Collision list : entity list -> Forces list : float list *)
+(* Link list : entity list -> Forces list : position list *)
+(* Collision response *)
 let compute_forces l =
 	let (l,isBubble) = List.fold_left (fun acc e ->
 		match e with
@@ -73,31 +93,32 @@ let compute_forces l =
 	if isBubble then l else gravity::l
 		(* TODO : ajouter la réaction du support *)
 
-let ball_sum_force l =
-	List.fold_left (fun acc e -> acc + e) { x = 0.; y = 0. } l
+let sum_force l =
+	List.fold_left (+) { x = 0.; y = 0. } l
 
 let ball_move g dt =
-
 	(* Compute new pos *)
 	let b = g.ball in
+	let ent = g.entities in
 	let colList = check_collisions b g.entities in
-	let forceList = compute_forces colList in
-	let sumForces = ball_sum_force forceList in
-
+	let forceList = compute_forces b.links in
+	let sumForces = sum_force forceList in
 	let newSpeed = b.speed + dt * sumForces in
-	let newB = { b with speed  = newSpeed; position = b.position + dt * newSpeed } in
-
+	let b = { b with
+		position = b.position + dt * newSpeed;
+		speed  = newSpeed;
+		links = update_links colList b.links
+	} in
 	(* Check for collision  & respond *)
-
-	(* let forces = compute_forces colList in *)
 
 	(* Respond to collsions *)
 
+	let ent = clear_entities colList ent in
+	(* let sumForces = ball_sum_force *)
 	(* Update position & speed *)
-
-	newB
+	{ball = b; entities = ent}
 
 let move g dt =
-	let b = (ball_move g dt) in
-	if b.position.y <= 0. then raise OutOfBoundsException
-	else { g with ball = b }
+	let g = (ball_move g dt) in
+	if g.ball.position.y <= 0. then raise OutOfBoundsException
+	else g
