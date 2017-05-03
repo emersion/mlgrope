@@ -65,9 +65,8 @@ let draw s =
 let step g =
 	let t = Unix.gettimeofday () in
 	let dt = t -. g.time in
-	let g = { g with time = t } in
+	let g = { g with time = t; state = Backend.move g.state dt } in
 	Graphics.clear_graph ();
-	let g = { g with state = Backend.move g.state dt } in
 	draw g.state;
 	Graphics.synchronize ();
 	g
