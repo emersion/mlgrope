@@ -11,6 +11,7 @@ type bubble = {
 type rope = {
 	position : vec;
 	radius : float;
+	length : float;
 }
 
 type goal = {
