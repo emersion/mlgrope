@@ -5,7 +5,9 @@ CMIS = mlgrope.cmi backend.cmi frontend.cmi
 CMOS = mlgrope.cmo backend.cmo frontend.cmo main.cmo
 
 all: mlgrope
-.PHONY: all
+clean:
+	rm -rf mlgrope *.cmo *.cmi
+.PHONY: all clean
 
 %.cmi: %.mli
 	$(OCAMLC) $(CFLAGS) -c $<
