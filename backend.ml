@@ -11,16 +11,16 @@ let (+) v1 v2 =
 	{ x = v1.x +. v2.x; y = v1.y +. v2.y }
 
 let (=) v1 v2 =
-	v1.x = v2.x && v1.y = v2.y 
+	v1.x = v2.x && v1.y = v2.y
 
 let (-) v1 v2 =
 	{ x = v1.x -. v2.x; y = v1.y -. v2.y }
 
 
-let dot v1 v2  =  
+let dot v1 v2  =
 	{ x = v1.x *. v2.x; y = v1.y *. v2.y }
 
-let ( * ) s v  = 
+let ( * ) s v  =
 	{ x = s *. v.x; y = s *. v.y }
 
 let abs x = if x >= 0.0 then x else -. x
@@ -31,7 +31,7 @@ let print_vector v =
 
 let check_collision b ent =
 		match ent with
-		| Goal(g) -> 
+		| Goal(g) ->
 			let dist = (g.position.x -. b.position.x)**2.  +. (g.position.y -. b.position.y)**2. in
 			if Mlgrope.ball_radius**2.0 >= dist
 			then raise (CollisionException (Goal g))
@@ -44,7 +44,7 @@ let check_collision b ent =
 let rec check_collisions b entl =
 		match entl with
 		| [] -> ()
-		| e::s -> (check_collision b e) ; (check_collisions b s) 
+		| e::s -> (check_collision b e) ; (check_collisions b s)
 
 let ball_move g dt =
 	(* Compute new pos *)
@@ -62,7 +62,7 @@ let ball_move g dt =
 	(* Respond to collision *)
 
 	(* Update position & speed *)
-	newB 
+	newB
 
 
 let move g dt =

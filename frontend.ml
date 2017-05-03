@@ -72,25 +72,7 @@ let step g =
 	Graphics.synchronize ();
 	g
 
-let () =
-	let rope = {position = {x = 300.; y = 100.}; radius = 40.} in
-	let g = {
-		size = {x = 400.; y = 400.};
-		time = Unix.gettimeofday ();
-		state = {
-			ball = {
-				position = {x = 200.; y = 300.};
-				speed = {x = 0.; y = 0.};
-				accel = {x = 0.; y = -150.};
-				links = [Rope(rope)];
-			};
-			entities = [
-				Bubble{position = {x = 100.; y = 200.}; radius = 50.};
-				Rope(rope);
-				Goal{position = {x = 200.; y = 20.}};
-			];
-		};
-	} in
+let run g =
 	Graphics.open_graph (" "^(string_of_int (int_of_float (g.size.x)))^"x"^(string_of_int (int_of_float (g.size.y))));
 	Graphics.auto_synchronize false;
 

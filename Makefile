@@ -1,11 +1,15 @@
 OCAMLC ?= ocamlc
 CFLAGS = -thread
 CMAS = graphics.cma unix.cma threads.cma
-
-mlgrope:
-	$(OCAMLC) $(CFLAGS) -c mlgrope.mli backend.mli backend.ml frontend.ml mlgrope.ml
-	$(OCAMLC) $(CFLAGS) -o $@ $(CMAS) mlgrope.cmo backend.cmo frontend.cmo
+CMIS = mlgrope.cmi backend.cmi frontend.cmi
+CMOS = mlgrope.cmo backend.cmo frontend.cmo main.cmo
 
 all: mlgrope
-
 .PHONY: all
+
+%.cmi: %.mli
+	$(OCAMLC) $(CFLAGS) -c $<
+%.cmo: %.ml $(CMIS)
+	$(OCAMLC) $(CFLAGS) -c $<
+mlgrope: $(CMOS)
+	$(OCAMLC) $(CFLAGS) -o $@ $(CMAS) $^
