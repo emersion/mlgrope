@@ -12,6 +12,9 @@ let bubble_color = Graphics.red
 let rope_color = Graphics.green
 let goal_color = Graphics.blue
 
+let dist a b =
+	sqrt ((a.x -. b.x)**2. +. (a.y -. b.y)**2.)
+
 let mix v1 v2 t =
 	{ x = t *. v1.x +. (1. -. t) *. v2.x; y = t *. v1.y +. (1. -. t) *. v2.y }
 
@@ -71,11 +74,34 @@ let step g =
 	Graphics.synchronize ();
 	g
 
+let is_bubble e =
+	match e with
+	| Bubble(_) -> true
+	| _ -> false
+
+let handle_click_on_bubble ba pos =
+	try
+		let Bubble(bu) = List.find is_bubble ba.links in
+		if dist pos ba.position <= bu.radius then
+			{ba with links = List.filter (fun e -> e != Bubble(bu)) ba.links}
+		else ba
+	with _ -> ba
+
+let handle_event gs s =
+	match s with
+	| {button = true; mouse_x; mouse_y} ->
+		let pos = {x = float_of_int mouse_x; y = float_of_int mouse_y} in
+		{gs with ball = handle_click_on_bubble gs.ball pos}
+	| {keypressed = true; key = '\027'} -> raise Exit
+	| _ -> gs
+
 let run g =
-	Graphics.open_graph (" "^(string_of_int (int_of_float (g.size.x)))^"x"^(string_of_int (int_of_float (g.size.y))));
+	let (w, h) = (int_of_float g.size.x, int_of_float g.size.y) in
+	Graphics.open_graph (" "^(string_of_int w)^"x"^(string_of_int h));
 	Graphics.auto_synchronize false;
 
 	let g = ref (step g) in
 	Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ -> g := step !g));
 	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = tick_rate; it_value = tick_rate} in
-	Graphics.loop_at_exit [] (fun _ -> ())
+	let events = [Graphics.Button_down; Graphics.Key_pressed] in
+	Graphics.loop_at_exit events (fun s -> g := {!g with state = handle_event !g.state s})
