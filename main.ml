@@ -2,7 +2,7 @@ open Mlgrope
 open Frontend
 
 let () =
-	let rope = {position = {x = 300.; y = 100.}; radius = 40.; length = 40.} in
+	let rope = {position = {x = 300.; y = 300.}; radius = 40.; length = 150.} in
 	let g = {
 		size = {x = 400.; y = 400.};
 		time = Unix.gettimeofday ();
