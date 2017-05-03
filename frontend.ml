@@ -79,14 +79,28 @@ let is_bubble_at pos ball e =
 	| Bubble(bubble) -> dist pos ball.position <= bubble.radius
 	| _ -> false
 
-let is_rope_at pos e =
+let is_between a b x =
+	(min a b) <= x && x <= (max a b)
+
+let intersects_box a b pos =
+	is_between a.x b.x pos.x && is_between a.y b.y pos.y
+
+let intersects_line a b pos =
+	let k = (b.y -. a.y) /. (b.x -. a.x) in
+	let y0 = a.y -. a.x *. k in
+	abs_float ((y0 +. k *. pos.x) -. pos.y) <= 5.
+
+let intesects_segment a b pos =
+	intersects_box a b pos && intersects_line a b pos
+
+let is_rope_at pos ball e =
 	match e with
-	| Rope(rope) -> true (* TODO *)
+	| Rope(rope) -> intesects_segment rope.position ball.position pos
 	| _ -> false
 
 let handle_click ball pos =
 	let is_bubble = is_bubble_at pos ball in
-	let is_rope = is_rope_at pos in
+	let is_rope = is_rope_at pos ball in
 	{ball with links = List.filter (fun e ->
 		not (is_bubble e) && not (is_rope e)
 	) ball.links}
