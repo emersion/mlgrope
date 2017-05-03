@@ -34,9 +34,9 @@ let norm v =
 (* Ex for the rope : v1 is the ball center, v2 is the rope center*)
 let projection v1 v2 =
 	(* a : la pente (vecteur unitaire), co le cosinus *)
-	let a = {x = 1.; y = (v2.y -. v1.y) /. (v2.x -. v1.x)} in
-	let a = {x = a.x /. norm a; y = a.y /. norm a} in
 	let co = (dot v1 v2) /. ((norm v1) *. (norm v2)) in
+	let a = {x = (v2.x -. v1.x); y = (v2.y -. v1.y)} in
+	let a = {x = a.x /. norm a; y = a.y /. norm a} in
 	((norm v1) *. co) * a
 
 let remove_from_list o l = List.filter (fun e -> o != e) l
