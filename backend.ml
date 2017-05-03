@@ -25,6 +25,9 @@ let ( * ) s v  =
 
 let abs x = if x >= 0.0 then x else -. x
 
+let distance v1 v2  =
+	(v1.x -. v2.x)**2.  +. (v1.y -. v2.y)**2.
+
 let print_vector v =
 	print_string ("x = "); print_float v.x;
 	print_string " y = "; print_float v.y
@@ -32,7 +35,7 @@ let print_vector v =
 let check_collision b ent =
 		match ent with
 		| Goal(g) ->
-			let dist = (g.position.x -. b.position.x)**2.  +. (g.position.y -. b.position.y)**2. in
+			let dist = distance g.position b.position in
 			if Mlgrope.ball_radius**2.0 >= dist
 			then raise (CollisionException (Goal g))
 		| Bubble(bu) ->
@@ -46,22 +49,32 @@ let rec check_collisions b entl =
 		| [] -> ()
 		| e::s -> (check_collision b e) ; (check_collisions b s)
 
+let link_entities entl b =
+	List.fold_left (fun acc e ->
+									match e with
+									| Rope(r) -> 	if distance r.position b.position <= r.radius
+																then { acc with links = e::acc.links }
+																else acc
+									| _ -> acc
+								)
+	b (*acc*) entl (* c'est la liste d'elt *)
+
 let ball_move g dt =
 	(* Compute new pos *)
 	let b = g.ball in
 	let newSpeed = b.speed + dt * b.accel in
 	let newB = { b with speed  = newSpeed; position = b.position + dt * newSpeed } in
 
-	(* Check for collision *)
+	(* Check for collision  & respond *)
 	let newB = try check_collisions b g.entities; newB with
 		| CollisionException (Goal go) -> raise TouchedGoalException
 		| CollisionException (Bubble bu) ->
 			let newAcc = { x = newB.accel.x; y = abs(newB.accel.y) } in
 			{ newB with accel = newAcc }
 	in
-	(* Respond to collision *)
-
 	(* Update position & speed *)
+
+
 	newB
 
 
