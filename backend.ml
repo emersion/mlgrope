@@ -20,7 +20,8 @@ let ( * ) s v  =
 
 let abs x = if x >= 0.0 then x else -. x
 
-let distance v1 v2  =
+
+let distance_carre v1 v2  =
 	(v1.x -. v2.x)**2.  +. (v1.y -. v2.y)**2.
 
 let dot v1 v2  =
@@ -30,10 +31,13 @@ let norm v =
 	sqrt (v.x**2. +. v.y**2.)
 
 (* v1 -> v2 -> v3 projects v1 on v2 according to y result is v *)
+(* Ex for the rope : v1 is the ball center, v2 is the rope center*)
 let projection v1 v2 =
+	(* a : la pente (vecteur unitaire), co le cosinus *)
 	let co = (dot v1 v2) /. ((norm v1) *. (norm v2)) in
-	let angle = acos co in
-	{ x = tan angle *. v1.y; y = v1.y }
+	let a = {x = (v2.x -. v1.x); y = (v2.y -. v1.y)} in
+	let a = {x = a.x /. norm a; y = a.y /. norm a} in
+	((norm v1) *. co) * a
 
 let remove_from_list o l = List.filter (fun e -> o != e) l
 
@@ -50,17 +54,17 @@ let clear_entities col entl =
  		* add_links
 		* remove_links
 *)
-let rec update_links col l =
+let rec update_links col links =
 	List.fold_left (fun acc e ->
 		match e with
 		| Bubble(bu) -> e::acc
 		| _ -> acc
-		) l col
+		) links col
 
 let check_collision b ent =
 	match ent with
 	| Goal(g) ->
-		let dist = distance g.position b.position in
+		let dist = distance_carre g.position b.position in
 		if Mlgrope.ball_radius**2. >= dist then raise TouchedGoalException else false
 	| Bubble(bu) ->
 		let dist = (bu.position.x -. b.position.x)**2.  +. (bu.position.y -. b.position.y)**2. in
@@ -75,20 +79,22 @@ let check_collisions b entl =
 let link_entities entl b =
 	List.fold_left (fun acc e ->
 									match e with
-									| Rope(r) -> 	if distance r.position b.position <= r.radius
+									| Rope(r) -> 	if distance_carre r.position b.position <= r.radius
 																then { acc with links = e::acc.links }
 																else acc
 									| _ -> acc
 								)	b entl
 
-(* Link list : entity list -> Forces list : position list *)
+(* ball pos, Link list : entity list -> Forces list : position list *)
 (* Collision response *)
-let compute_forces l =
+let compute_forces pos l =
 	let (l,isBubble) = List.fold_left (fun acc e ->
 		match e with
 		| Bubble(bu) -> ({gravity with y = abs gravity.y}::(fst acc), true)
-		| _ -> let (l,isBubble) = acc in
-			if isBubble then (l, true) else (l, false)
+		| Rope(r) -> if sqrt (distance_carre pos r.position) >= r.length
+			then ((projection pos r.position)::(fst acc), snd acc)
+			else acc
+		| _ -> acc
 		) ([],false) l in
 	if isBubble then l else gravity::l
 		(* TODO : ajouter la réaction du support *)
@@ -101,7 +107,7 @@ let ball_move g dt =
 	let b = g.ball in
 	let ent = g.entities in
 	let colList = check_collisions b g.entities in
-	let forceList = compute_forces b.links in
+	let forceList = compute_forces b.position b.links in
 	let sumForces = sum_force forceList in
 	let newSpeed = b.speed + dt * sumForces in
 	let b = { b with
@@ -118,7 +124,15 @@ let ball_move g dt =
 	(* Update position & speed *)
 	{ball = b; entities = ent}
 
+let find_bubble l = List.exists (fun e -> match e with | Bubble(bu) -> true	| _ -> false) l
+
 let move g dt =
 	let g = (ball_move g dt) in
-	if g.ball.position.y <= 0. then raise OutOfBoundsException
+	if (find_bubble g.ball.links) then
+		if g.ball.position.y >= 400.
+		then raise OutOfBoundsException
+		else
+			if g.ball.position.y <= 0.
+			then raise OutOfBoundsException
+			else g
 	else g
