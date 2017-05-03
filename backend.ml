@@ -16,10 +16,6 @@ let (=) v1 v2 =
 let (-) v1 v2 =
 	{ x = v1.x -. v2.x; y = v1.y -. v2.y }
 
-
-let dot v1 v2  =
-	{ x = v1.x *. v2.x; y = v1.y *. v2.y }
-
 let ( * ) s v  =
 	{ x = s *. v.x; y = s *. v.y }
 
@@ -27,6 +23,13 @@ let abs x = if x >= 0.0 then x else -. x
 
 let distance v1 v2  =
 	(v1.x -. v2.x)**2.  +. (v1.y -. v2.y)**2.
+
+let dot v1 v2  =
+	v1.x *. v2.x +. v1.y *. v2.y
+
+
+let norm v =
+	sqrt (v.x**2. +. v.y**2.)
 
 let print_vector v =
 	print_string ("x = "); print_float v.x;
@@ -59,6 +62,12 @@ let link_entities entl b =
 								)
 	b (*acc*) entl (* c'est la liste d'elt *)
 
+(* v1 -> v2 -> v3 projects v1 on v2 according to y result is v *)
+let projection v1 v2 =
+	let co = (dot v1 v2) /. ((norm v1) *. (norm v2)) in
+	let angle = acos co in
+	{ x = tan angle *. v1.y; y = v1.y }
+
 let ball_move g dt =
 	(* Compute new pos *)
 	let b = g.ball in
@@ -73,7 +82,6 @@ let ball_move g dt =
 			{ newB with accel = newAcc }
 	in
 	(* Update position & speed *)
-
 
 	newB
 
