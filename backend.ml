@@ -2,10 +2,9 @@ open Mlgrope
 
 exception OutOfBoundsException
 exception TouchedGoalException
-exception CollisionException of entity
 
-let a  = {x = 3.0; y = 5.2}
-let b  = {x = 4.2; y = 0.3}
+(* gravity constant = -150 px.s-2 *)
+let gravity = { x = 0.; y = -150. }
 
 let (+) v1 v2 =
 	{ x = v1.x +. v2.x; y = v1.y +. v2.y }
@@ -27,30 +26,31 @@ let distance v1 v2  =
 let dot v1 v2  =
 	v1.x *. v2.x +. v1.y *. v2.y
 
-
 let norm v =
 	sqrt (v.x**2. +. v.y**2.)
 
-let print_vector v =
-	print_string ("x = "); print_float v.x;
-	print_string " y = "; print_float v.y
+(* v1 -> v2 -> v3 projects v1 on v2 according to y result is v *)
+let projection v1 v2 =
+	let co = (dot v1 v2) /. ((norm v1) *. (norm v2)) in
+	let angle = acos co in
+	{ x = tan angle *. v1.y; y = v1.y }
+
+let remove_bubble b l =
+	List.fold_left (fun acc e -> if e = b then acc else e::acc) [] l
 
 let check_collision b ent =
-		match ent with
-		| Goal(g) ->
-			let dist = distance g.position b.position in
-			if Mlgrope.ball_radius**2.0 >= dist
-			then raise (CollisionException (Goal g))
-		| Bubble(bu) ->
-			let dist = (bu.position.x -. b.position.x)**2.  +. (bu.position.y -. b.position.y)**2. in
-			if (Mlgrope.ball_radius +. bu.radius)**2. >= dist
-			then raise (CollisionException (Bubble bu))
-		| _ -> ()
+	match ent with
+	| Goal(g) ->
+		let dist = distance g.position b.position in
+		if Mlgrope.ball_radius**2. >= dist then raise TouchedGoalException else false
+	| Bubble(bu) ->
+		let dist = (bu.position.x -. b.position.x)**2.  +. (bu.position.y -. b.position.y)**2. in
+		(Mlgrope.ball_radius +. bu.radius)**2. >= dist
+	| _ -> false
 
-let rec check_collisions b entl =
-		match entl with
-		| [] -> ()
-		| e::s -> (check_collision b e) ; (check_collisions b s)
+let check_collisions b entl =
+	List.fold_left (fun acc e -> if check_collision b e then e::acc else acc)
+	[] entl
 
 let link_entities entl b =
 	List.fold_left (fun acc e ->
@@ -60,31 +60,42 @@ let link_entities entl b =
 																else acc
 									| _ -> acc
 								)
-	b (*acc*) entl (* c'est la liste d'elt *)
+	b entl
 
-(* v1 -> v2 -> v3 projects v1 on v2 according to y result is v *)
-let projection v1 v2 =
-	let co = (dot v1 v2) /. ((norm v1) *. (norm v2)) in
-	let angle = acos co in
-	{ x = tan angle *. v1.y; y = v1.y }
+(* Collision list : entity list -> Forces list : float list *)
+let compute_forces l =
+	let (l,isBubble) = List.fold_left (fun acc e ->
+		match e with
+		| Bubble(bu) -> ({gravity with y = abs gravity.y}::(fst acc), true)
+		| _ -> let (l,isBubble) = acc in
+			if isBubble then (l, true) else (l, false)
+		) ([],false) l in
+	if isBubble then l else gravity::l
+		(* TODO : ajouter la réaction du support *)
+
+let ball_sum_force l =
+	List.fold_left (fun acc e -> acc + e) { x = 0.; y = 0. } l
 
 let ball_move g dt =
+
 	(* Compute new pos *)
 	let b = g.ball in
-	let newSpeed = b.speed + dt * b.accel in
+	let colList = check_collisions b g.entities in
+	let forceList = compute_forces colList in
+	let sumForces = ball_sum_force forceList in
+
+	let newSpeed = b.speed + dt * sumForces in
 	let newB = { b with speed  = newSpeed; position = b.position + dt * newSpeed } in
 
 	(* Check for collision  & respond *)
-	let newB = try check_collisions b g.entities; newB with
-		| CollisionException (Goal go) -> raise TouchedGoalException
-		| CollisionException (Bubble bu) ->
-			let newAcc = { x = newB.accel.x; y = abs(newB.accel.y) } in
-			{ newB with accel = newAcc }
-	in
+
+	(* let forces = compute_forces colList in *)
+
+	(* Respond to collsions *)
+
 	(* Update position & speed *)
 
 	newB
-
 
 let move g dt =
 	let b = (ball_move g dt) in
