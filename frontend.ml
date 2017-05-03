@@ -49,7 +49,7 @@ let draw_entity e =
 
 let rec draw_link b l =
 	match l with
-	| Rope({position}) -> let a = 0.1 in
+	| Rope({position}) ->
 		let n = 10 in
 		let line = Array.init (n+1) (fun i ->
 			let t = (float_of_int i) /. (float_of_int n) in
@@ -74,24 +74,28 @@ let step g =
 	Graphics.synchronize ();
 	g
 
-let is_bubble e =
+let is_bubble_at pos ball e =
 	match e with
-	| Bubble(_) -> true
+	| Bubble(bubble) -> dist pos ball.position <= bubble.radius
 	| _ -> false
 
-let handle_click_on_bubble ba pos =
-	try
-		let Bubble(bu) = List.find is_bubble ba.links in
-		if dist pos ba.position <= bu.radius then
-			{ba with links = List.filter (fun e -> e != Bubble(bu)) ba.links}
-		else ba
-	with _ -> ba
+let is_rope_at pos e =
+	match e with
+	| Rope(rope) -> true (* TODO *)
+	| _ -> false
+
+let handle_click ball pos =
+	let is_bubble = is_bubble_at pos ball in
+	let is_rope = is_rope_at pos in
+	{ball with links = List.filter (fun e ->
+		not (is_bubble e) && not (is_rope e)
+	) ball.links}
 
 let handle_event gs s =
 	match s with
 	| {button = true; mouse_x; mouse_y} ->
 		let pos = {x = float_of_int mouse_x; y = float_of_int mouse_y} in
-		{gs with ball = handle_click_on_bubble gs.ball pos}
+		{gs with ball = handle_click gs.ball pos}
 	| {keypressed = true; key = '\027'} -> raise Exit
 	| _ -> gs
 
@@ -103,5 +107,5 @@ let run g =
 	let g = ref (step g) in
 	Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ -> g := step !g));
 	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = tick_rate; it_value = tick_rate} in
-	let events = [Graphics.Button_down; Graphics.Key_pressed] in
+	let events = [Graphics.Button_down; Graphics.Mouse_motion; Graphics.Key_pressed] in
 	Graphics.loop_at_exit events (fun s -> g := {!g with state = handle_event !g.state s})
