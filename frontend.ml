@@ -12,8 +12,7 @@ let bubble_color = Graphics.red
 let rope_color = Graphics.green
 let goal_color = Graphics.blue
 
-let dist a b =
-	sqrt ((a.x -. b.x)**2. +. (a.y -. b.y)**2.)
+let dist = Mlgrope.dist
 
 let mix a b t =
 	t *. a +. (1. -. t) *. b
@@ -21,31 +20,32 @@ let mix a b t =
 let mix_vec v1 v2 t =
 	{ x = mix v1.x v2.x t; y = mix v1.y v2.y t }
 
-let int_of_position p =
+let ints_of_vec p =
 	(int_of_float p.x, int_of_float p.y)
 
+
 let draw_bubble (b : bubble) =
-	let (x, y) = int_of_position b.position in
+	let (x, y) = ints_of_vec b.position in
 	Graphics.set_color bubble_color;
 	Graphics.draw_circle x y (int_of_float b.radius)
 
 let draw_rope (r : rope) =
-	let (x, y) = int_of_position r.position in
+	let (x, y) = ints_of_vec r.position in
 	Graphics.set_color rope_color;
 	Graphics.draw_circle x y (int_of_float r.radius)
 
 let draw_elastic (e : elastic) =
-	let (x, y) = int_of_position e.position in
+	let (x, y) = ints_of_vec e.position in
 	Graphics.set_color rope_color;
 	Graphics.draw_circle x y (int_of_float e.radius)
 
 let draw_goal (g : goal) =
-	let (x, y) = int_of_position g.position in
+	let (x, y) = ints_of_vec g.position in
 	Graphics.set_color goal_color;
 	Graphics.fill_rect (x - 1) (y - 1) 2 2
 
 let draw_ball (b : ball) =
-	let (x, y) = int_of_position b.position in
+	let (x, y) = ints_of_vec b.position in
 	Graphics.set_color ball_color;
 	Graphics.fill_circle x y (int_of_float Mlgrope.ball_radius);
 
@@ -62,6 +62,7 @@ let draw_entity e =
 	| Elastic(e) -> draw_elastic e
 	| Goal(g) -> draw_goal g
 
+(* Newton's method *)
 let find_zero f x0 =
 	let accuracy = 10.**(-4.) in
 	let epsilon = 10.**(-10.) in
@@ -84,7 +85,7 @@ let build_poly_line f =
 	let n = 100 in
 	Array.init (n+1) (fun i ->
 		let t = (float_of_int i) /. (float_of_int n) in
-		int_of_position (f t)
+		ints_of_vec (f t)
 	)
 
 let create_line a b =

@@ -3,6 +3,12 @@ type vec = {
 	y : float;
 }
 
+let squared_dist a b =
+	(a.x -. b.x)**2. +. (a.y -. b.y)**2.
+
+let dist a b =
+	sqrt (squared_dist a b)
+
 type bubble = {
 	position : vec;
 	radius : float;

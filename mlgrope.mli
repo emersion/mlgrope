@@ -3,6 +3,9 @@ type vec = {
 	y : float;
 }
 
+val squared_dist : vec -> vec -> float
+val dist : vec -> vec -> float
+
 type bubble = {
 	position : vec;
 	radius : float;
