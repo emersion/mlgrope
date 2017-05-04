@@ -90,11 +90,11 @@ let build_poly_line f =
 let create_line a b =
 	fun t -> mix_vec a b t
 
-let create_rope_line a b =
+let create_rope_line a b l =
 	let (a, b) = if a.x < b.x then (a, b) else (b, a) in
 	let (x1, y1) = (a.x, a.y) in
 	let (x2, y2) = (b.x, b.y) in
-	let c1 = (y2 -. y1) /. (1.1 *. (dist a b)) in
+	let c1 = (y2 -. y1) /. l in
 	let c2 = copysign (sqrt ((c1**2.) /. (1. -. c1**2.))) c1 in
 	let f a = y2 -. y1 -. 2. *. a *. c2 *. (sinh ((x2 -. x1) /. (2. *. a))) in
 	(* Printf.printf "%f %f %f %f %f\n%!" x1 y1 x2 y2 (f (-10.)); *)
@@ -107,15 +107,11 @@ let create_rope_line a b =
 
 let draw_link b l =
 	match l with
-	| Rope{position} ->
+	| Rope{position; length} | Elastic{position; length} ->
 		let line = build_poly_line (
-			try create_rope_line position b.position
+			try create_rope_line position b.position length
 			with _ -> create_line position b.position
 		) in
-		Graphics.set_color Graphics.black;
-		Graphics.draw_poly_line line
-	| Elastic{position} ->
-		let line = build_poly_line (create_line position b.position) in
 		Graphics.set_color Graphics.black;
 		Graphics.draw_poly_line line
 	| _ -> ()

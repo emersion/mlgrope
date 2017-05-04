@@ -15,10 +15,10 @@ type rope = {
 }
 
 type elastic = {
-		position : vec;
-		radius : float;
-		length : float;
-		stiffness : float;
+	position : vec;
+	radius : float;
+	length : float;
+	stiffness : float;
 }
 
 type goal = {
