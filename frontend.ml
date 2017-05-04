@@ -52,8 +52,9 @@ let draw_entity e =
 	| Bubble(b) -> draw_bubble b
 	| Rope(r) -> draw_rope r
 	| Goal(g) -> draw_goal g
+	| _ -> ()
 
-let rec draw_link b l =
+let draw_link b l =
 	match l with
 	| Rope({position}) ->
 		let n = 10 in
