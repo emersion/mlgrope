@@ -47,5 +47,6 @@ type game_state = {
 type game = {
 	size : vec;
 	time : float;
+	paused : bool;
 	state : game_state;
 }

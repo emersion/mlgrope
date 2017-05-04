@@ -15,8 +15,11 @@ let goal_color = Graphics.blue
 let dist a b =
 	sqrt ((a.x -. b.x)**2. +. (a.y -. b.y)**2.)
 
-let mix v1 v2 t =
-	{ x = t *. v1.x +. (1. -. t) *. v2.x; y = t *. v1.y +. (1. -. t) *. v2.y }
+let mix a b t =
+	t *. a +. (1. -. t) *. b
+
+let mix_vec v1 v2 t =
+	{ x = mix v1.x v2.x t; y = mix v1.y v2.y t }
 
 let int_of_position p =
 	(int_of_float p.x, int_of_float p.y)
@@ -30,6 +33,11 @@ let draw_rope (r : rope) =
 	let (x, y) = int_of_position r.position in
 	Graphics.set_color rope_color;
 	Graphics.draw_circle x y (int_of_float r.radius)
+
+let draw_elastic (e : elastic) =
+	let (x, y) = int_of_position e.position in
+	Graphics.set_color rope_color;
+	Graphics.draw_circle x y (int_of_float e.radius)
 
 let draw_goal (g : goal) =
 	let (x, y) = int_of_position g.position in
@@ -51,18 +59,63 @@ let draw_entity e =
 	match e with
 	| Bubble(b) -> draw_bubble b
 	| Rope(r) -> draw_rope r
+	| Elastic(e) -> draw_elastic e
 	| Goal(g) -> draw_goal g
-	| _ -> ()
+
+let find_zero f x0 =
+	let accuracy = 10.**(-4.) in
+	let epsilon = 10.**(-10.) in
+	let maxiter = 50 in
+	let dx = 10.**(-4.) in
+	let f' x = ((f x) -. (f (x -. dx))) /. dx in
+	let rec find_zero n x =
+		if n > maxiter then raise Not_found else
+		let (y, y') = (f x, f' x) in
+		if abs_float y' < epsilon then raise Not_found else
+		let x' = x -. y /. y' in
+		if abs_float (x' -. x) <= accuracy *. abs_float x' then
+			x'
+		else
+			find_zero (n+1) x'
+	in
+	find_zero 0 x0
+
+let build_poly_line f =
+	let n = 100 in
+	Array.init (n+1) (fun i ->
+		let t = (float_of_int i) /. (float_of_int n) in
+		int_of_position (f t)
+	)
+
+let create_line a b =
+	fun t -> mix_vec a b t
+
+let create_rope_line a b =
+	let (a, b) = if a.x < b.x then (a, b) else (b, a) in
+	let (x1, y1) = (a.x, a.y) in
+	let (x2, y2) = (b.x, b.y) in
+	let c1 = (y2 -. y1) /. (1.1 *. (dist a b)) in
+	let c2 = copysign (sqrt ((c1**2.) /. (1. -. c1**2.))) c1 in
+	let f a = y2 -. y1 -. 2. *. a *. c2 *. (sinh ((x2 -. x1) /. (2. *. a))) in
+	(* Printf.printf "%f %f %f %f %f\n%!" x1 y1 x2 y2 (f (-10.)); *)
+	let a = find_zero f ((x2 -. x1) /. 2.) in
+	let h x0 = y2 -. y1 -. a *. ((cosh ((x2 -. x0) /. a)) -. (cosh ((x1 -. x0) /. a))) in
+	let x0 = find_zero h 0. in
+	let y0 = y1 -. a *. (cosh ((x1 -. x0) /. a)) +. a in
+	let y x = a *. (cosh ((x -. x0) /. a)) +. (y0 -. a) in
+	fun t -> let x = mix x1 x2 t in {x; y = y x}
 
 let draw_link b l =
 	match l with
-	| Rope({position}) ->
-		let n = 10 in
-		let line = Array.init (n+1) (fun i ->
-			let t = (float_of_int i) /. (float_of_int n) in
-			int_of_position (mix position b.position t)
-			(* TODO *)
+	| Rope{position} ->
+		let line = build_poly_line (
+			try create_rope_line position b.position
+			with _ -> create_line position b.position
 		) in
+		Graphics.set_color Graphics.black;
+		Graphics.draw_poly_line line
+	| Elastic{position} ->
+		let line = build_poly_line (create_line position b.position) in
 		Graphics.set_color Graphics.black;
 		Graphics.draw_poly_line line
 	| _ -> ()
@@ -75,7 +128,10 @@ let draw s =
 let step g =
 	let t = Unix.gettimeofday () in
 	let dt = t -. g.time in
-	let g = { g with time = t; state = Backend.move g.state dt } in
+	let g = { g with
+		time = t;
+		state = if g.paused then g.state else Backend.move g.state dt
+	} in
 	Graphics.clear_graph ();
 	draw g.state;
 	Graphics.synchronize ();
@@ -135,7 +191,7 @@ let handle_click ball lastpos pos =
 		not (is_bubble e) && not (is_rope e)
 	) ball.links}
 
-let handle_event gs s s' =
+let handle_event g s s' =
 	match s' with
 	| {button = true; mouse_x; mouse_y} ->
 		let pos = {x = float_of_int mouse_x; y = float_of_int mouse_y} in
@@ -143,9 +199,10 @@ let handle_event gs s s' =
 		| {button = true; mouse_x; mouse_y} -> {x = float_of_int mouse_x; y = float_of_int mouse_y}
 		| _ -> pos
 		in
-		{gs with ball = handle_click gs.ball lastpos pos}
+		{g with state = {g.state with ball = handle_click g.state.ball lastpos pos}}
 	| {keypressed = true; key = '\027'} -> raise Exit
-	| _ -> gs
+	| {keypressed = true; key = 'p'} -> {g with paused = not g.paused}
+	| _ -> g
 
 let run g =
 	let (w, h) = (int_of_float g.size.x, int_of_float g.size.y) in
@@ -158,6 +215,6 @@ let run g =
 	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = tick_rate; it_value = tick_rate} in
 	let events = [Graphics.Button_down; Graphics.Mouse_motion; Graphics.Key_pressed] in
 	Graphics.loop_at_exit events (fun s' ->
-		g := {!g with state = handle_event !g.state !s s'};
+		g := handle_event !g !s s';
 		s := s'
 	)
