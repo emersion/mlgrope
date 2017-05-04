@@ -14,6 +14,13 @@ type rope = {
 	length : float;
 }
 
+type elastic = {
+		position : vec;
+		radius : float;
+		length : float;
+		stiffness : float;
+}
+
 type goal = {
 	position : vec;
 }
@@ -22,11 +29,11 @@ type entity =
 	| Bubble of bubble
 	| Rope of rope
 	| Goal of goal
+	| Elastic of elastic
 
 type ball = {
 	position : vec;
 	speed : vec;
-	accel : vec;
 	links : entity list;
 }
 
