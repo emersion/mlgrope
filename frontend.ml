@@ -25,6 +25,9 @@ let mix_vec v1 v2 t =
 let ints_of_vec p =
 	(int_of_float p.x, int_of_float p.y)
 
+let vec_of_status s =
+	{x = float_of_int s.mouse_x; y = float_of_int s.mouse_y}
+
 
 let draw_bubble (b : bubble) =
 	let (x, y) = ints_of_vec b.position in
