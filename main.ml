@@ -27,9 +27,11 @@ let edit path =
 	raise Exit
 
 let () =
-	Arg.parse [
-		("-edit", Arg.String(edit), "Edit a level")
-	] play "Usage: mlgrope [-edit] level.csv";
+	try
+		Arg.parse [
+			("-edit", Arg.String(edit), "Edit a level")
+		] play "Usage: mlgrope [-edit] level.csv";
 
-	(* No level specified *)
-	play "levels/0.csv"
+		(* No level specified *)
+		play "levels/0.csv"
+	with Exit -> ()
