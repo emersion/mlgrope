@@ -1,6 +1,5 @@
 open Mlgrope
 
-exception OutOfBoundsException
 exception TouchedGoalException
 
 let print_forces l =
@@ -98,8 +97,8 @@ let link_entities entl b =
 
 (* ball pos, Link list : entity list -> Forces list : position list *)
 (* Collision response *)
-let compute_forces pos l =
-	let (l,isBubble) = List.fold_left (fun acc e ->
+let compute_forces pos linkList =
+	let (linkList,isBubble) = List.fold_left (fun acc e ->
 		match e with
 		| Bubble(bu) -> ({gravity with y = 0.5*. abs gravity.y}::(fst acc), true)
 		| Elastic(e) -> let d = dist pos e.position in
@@ -107,14 +106,14 @@ let compute_forces pos l =
 			then ((elastic_force d e) * direction pos e.position ::(fst acc), snd acc)
 			else acc
 		| _ -> acc
-		) ([],false) l in
-	if isBubble then l else gravity::l
+		) ([],false) linkList in
+	if isBubble then linkList else gravity::linkList
 		(* TODO : ajouter la réaction du support *)
 
 let compute_reaction pos sumForces colList linkList =
 	List.fold_left (fun acc e ->
 		match e with
-		| Rope(r) -> if dist pos r.position >= r.length && List.mem e linkList
+		| Rope(r) -> if List.mem e linkList && dist pos r.position >= r.length
 			then (projection (-1. * sumForces) (r.position - pos))::acc
 			else acc
 		| _ -> acc
@@ -140,8 +139,15 @@ let rec apply_constraints b sumForces colList linkList =
 	| [] -> b.speed
 
 (* Handles collisions *)
-(* let compute_position pos colLsit =
-	| [] -> pos *)
+(* let compute_position pos colList linkist =
+	List.fold_left (fun acc e ->
+			match colList with
+			| Rope(r) ->
+				if List.mem e linkList && dist pos r.position >= r.length
+				then r.length * (direction r.position pos)
+				else pos
+			| [] -> pos
+	) pos *)
 
 let sum_force l =
 	List.fold_left (+) { x = 0.; y = 0. } l
@@ -149,15 +155,14 @@ let sum_force l =
 let ball_move g dt =
 	(* Compute new pos *)
 	let b = g.ball in
-	Printf.printf "%b\n%!" (find_rope b.links);
 	let ent = g.entities in
 	let colList = check_collisions b ent in
 	let forceList = compute_forces b.position b.links in
 	let sumForces = sum_force forceList in
 	let newLinks = update_links colList b.links in
 	let newLinks = link_entities ent {b with links = newLinks} in
+	(* compute links impact on the forces / movement / position *)
 	let reactionList = compute_reaction b.position sumForces colList newLinks in
-	(* print_forces forceList; *)
 	let sumForces = sumForces + sum_force reactionList in
 	let newSpeed = (apply_constraints b sumForces colList newLinks) + dt * sumForces in
 	let newPos = b.position + dt * newSpeed in
@@ -171,7 +176,4 @@ let ball_move g dt =
 
 let move g dt =
 	let g = (ball_move g dt) in
-	if (find_bubble g.ball.links) then
-		(if g.ball.position.y >= 400. then raise OutOfBoundsException else g)
-	else
-		(if g.ball.position.y <= 0. then raise OutOfBoundsException else g)
+	g
