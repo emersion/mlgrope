@@ -23,12 +23,6 @@ let ( * ) s v  =
 
 let abs x = if x >= 0.0 then x else -. x
 
-let distance_carre v1 v2  =
-	(v1.x -. v2.x)**2.  +. (v1.y -. v2.y)**2.
-
-let distance v1 v2 =
-	sqrt (distance_carre v1 v2)
-
 let dot v1 v2  =
 	v1.x *. v2.x +. v1.y *. v2.y
 
@@ -49,8 +43,8 @@ let projection v1 v2 =
 	let a = { x = v2.x /. (norm v2); y = v2.y /. (norm v2) } in
 	((norm v1) *. co) * a
 
-let elastic_force dist (e : elastic) =
-	(dist/.250. *. e.stiffness)**2.0
+let elastic_force d (e : elastic) =
+	(d/.250. *. e.stiffness)**2.0
 
 let remove_from_list o l = List.filter (fun e -> o != e) l
 
@@ -69,14 +63,13 @@ let clear_entities col entl =
 let check_collision b ent =
 	match ent with
 	| Goal(g) ->
-		let dist = distance_carre g.position b.position in
-		if Mlgrope.ball_radius**2. >= dist then raise TouchedGoalException else false
+		let d = squared_dist g.position b.position in
+		if Mlgrope.ball_radius**2. >= d then raise TouchedGoalException else false
 	| Bubble(bu) ->
-		let dist = distance_carre bu.position b.position in
-		(Mlgrope.ball_radius +. bu.radius)**2. >= dist
+		let d = squared_dist bu.position b.position in
+		(Mlgrope.ball_radius +. bu.radius)**2. >= d
 	| Rope(r) ->
-		let dist = distance_carre r.position b.position in
-		sqrt dist >= r.length
+		dist r.position b.position >= r.length
 	| _ -> false
 
 let check_collisions b entl =
@@ -96,7 +89,7 @@ let rec update_links col links =
 let link_entities entl b =
 	List.fold_left (fun acc e ->
 									match e with
-									| Rope(r) -> 	if distance_carre r.position b.position <= r.radius
+									| Rope(r) -> 	if dist r.position b.position <= r.radius
 																	&& (not (List.mem e acc))
 																then e::acc
 																else acc
@@ -108,41 +101,47 @@ let link_entities entl b =
 let compute_forces pos l =
 	let (l,isBubble) = List.fold_left (fun acc e ->
 		match e with
-		| Bubble(bu) -> ({gravity with y = abs gravity.y}::(fst acc), true)
-		| Elastic(e) -> let dist = distance pos e.position in
-			if dist >= e.length
-			then ((elastic_force dist e) * direction pos e.position ::(fst acc), snd acc)
+		| Bubble(bu) -> ({gravity with y = 0.5*. abs gravity.y}::(fst acc), true)
+		| Elastic(e) -> let d = dist pos e.position in
+			if d >= e.length
+			then ((elastic_force d e) * direction pos e.position ::(fst acc), snd acc)
 			else acc
 		| _ -> acc
 		) ([],false) l in
 	if isBubble then l else gravity::l
 		(* TODO : ajouter la réaction du support *)
 
-let compute_reaction pos sumForces l =
+let compute_reaction pos sumForces colList linkList =
 	List.fold_left (fun acc e ->
 		match e with
-		| Rope(r) -> if distance pos r.position >= r.length
+		| Rope(r) -> if dist pos r.position >= r.length && List.mem e linkList
 			then (projection (-1. * sumForces) (r.position - pos))::acc
 			else acc
 		| _ -> acc
-	) [] l
+	) [] colList
 
 (* I need to move the ball where it can go *)
 (* pos = previous pos, newPos position it would go to without any constraint *)
 let apply_constraint b sumForces col =
 	match col with
 	| Rope(r) ->
-		if distance b.position r.position >= r.length
+		if dist b.position r.position >= r.length
 		then projection b.speed sumForces
 		else b.speed
 	| _ -> b.speed
 
 (* Aplly constraints one after the other *)
-let rec apply_constraints b sumForces colList =
+let rec apply_constraints b sumForces colList linkList =
 	match colList with
-	| h::t -> let b = { b with speed = (apply_constraint b sumForces h) } in
-		apply_constraints b sumForces t
+	| h::t -> if List.mem h linkList
+		then let b = { b with speed = (apply_constraint b sumForces h) } in
+			apply_constraints b sumForces t linkList
+		else apply_constraints b sumForces t linkList
 	| [] -> b.speed
+
+(* Handles collisions *)
+(* let compute_position pos colLsit =
+	| [] -> pos *)
 
 let sum_force l =
 	List.fold_left (+) { x = 0.; y = 0. } l
@@ -150,16 +149,17 @@ let sum_force l =
 let ball_move g dt =
 	(* Compute new pos *)
 	let b = g.ball in
+	Printf.printf "%b\n%!" (find_rope b.links);
 	let ent = g.entities in
 	let colList = check_collisions b ent in
 	let forceList = compute_forces b.position b.links in
 	let sumForces = sum_force forceList in
-	let reactionList = compute_reaction b.position sumForces colList in
-	(* print_forces forceList; *)
-	let sumForces = sumForces + sum_force reactionList in
 	let newLinks = update_links colList b.links in
 	let newLinks = link_entities ent {b with links = newLinks} in
-	let newSpeed = (apply_constraints b sumForces colList) + dt * sumForces in
+	let reactionList = compute_reaction b.position sumForces colList newLinks in
+	(* print_forces forceList; *)
+	let sumForces = sumForces + sum_force reactionList in
+	let newSpeed = (apply_constraints b sumForces colList newLinks) + dt * sumForces in
 	let newPos = b.position + dt * newSpeed in
 	let newB = {
 		position = newPos;
