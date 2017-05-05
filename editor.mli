@@ -1,3 +1,3 @@
 open Mlgrope
 
-val run : Mlgrope.game_state -> unit
+val run : vec -> Mlgrope.game_state -> unit
