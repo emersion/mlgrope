@@ -99,10 +99,11 @@ let link_entities entl b =
 	List.fold_left (fun acc e ->
 									match e with
 									| Rope(r) -> 	if distance_carre r.position b.position <= r.radius
-																then { acc with links = e::acc.links }
+																	&& (not (List.mem e acc))
+																then e::acc
 																else acc
 									| _ -> acc
-								)	b entl
+								)	b.links entl
 
 (* ball pos, Link list : entity list -> Forces list : position list *)
 (* Collision response *)
@@ -159,6 +160,7 @@ let ball_move g dt =
 	(* print_forces forceList; *)
 	let sumForces = sumForces + sum_force reactionList in
 	let newLinks = update_links colList b.links in
+	let newLinks = link_entities ent b in
 	let newSpeed = (apply_constraints b sumForces colList) + dt * sumForces in
 	let newPos = b.position + dt * newSpeed in
 	let newB = {
