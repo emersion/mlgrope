@@ -7,7 +7,7 @@ let step gs =
 	Graphics.synchronize ();
 	gs
 
-let handle_event gs s =
+let handle_event gs s s' =
 	gs
 
 let run size gs =

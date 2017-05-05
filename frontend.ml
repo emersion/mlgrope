@@ -142,7 +142,11 @@ let run step handle_event size g =
 	Graphics.auto_synchronize false;
 
 	let g = ref (step g) in
+	let s = ref {mouse_x = 0; mouse_y = 0; button = false; keypressed = false; key = '\000'} in
 	Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ -> g := step !g));
 	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = tick_rate; it_value = tick_rate} in
 	let events = [Graphics.Button_down; Graphics.Mouse_motion; Graphics.Key_pressed] in
-	Graphics.loop_at_exit events (fun s -> g := handle_event !g s)
+	Graphics.loop_at_exit events (fun s' ->
+		g := handle_event !g !s s';
+		s := s'
+	)

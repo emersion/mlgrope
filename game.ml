@@ -100,10 +100,4 @@ let handle_event g s s' =
 	| _ -> g
 
 let run g =
-	let s = ref {mouse_x = 0; mouse_y = 0; button = false; keypressed = false; key = '\000'} in
-	let handle_event g s' =
-		let g = handle_event g !s s' in
-		s := s';
-		g
-	in
 	Frontend.run step handle_event g.size g
