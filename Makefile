@@ -1,7 +1,7 @@
 OCAMLC ?= ocamlc
 CFLAGS = -thread
 CMAS = graphics.cma unix.cma threads.cma
-MODULES = mlgrope backend frontend level game editor
+MODULES = mlgrope backend frontend level player editor
 CMIS = $(MODULES:=.cmi)
 CMOS = $(MODULES:=.cmo) main.cmo
 

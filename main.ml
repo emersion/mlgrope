@@ -2,7 +2,7 @@ open Arg
 
 open Mlgrope
 open Level
-open Game
+open Player
 open Editor
 
 let size = {x = 500.; y = 500.}
@@ -10,7 +10,7 @@ let size = {x = 500.; y = 500.}
 let play path =
 	let ch = open_in path in
 	let gs = Level.input ch in
-	Game.run size gs;
+	Player.run size gs;
 	raise Exit
 
 let edit path =
