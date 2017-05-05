@@ -11,6 +11,10 @@ let ball_color = Graphics.black
 let bubble_color = Graphics.red
 let rope_color = Graphics.green
 let goal_color = Graphics.blue
+let star_color = Graphics.yellow
+
+let goal_size = 10
+let star_size = 10
 
 let dist = Mlgrope.dist
 
@@ -42,7 +46,12 @@ let draw_elastic (e : elastic) =
 let draw_goal (g : goal) =
 	let (x, y) = ints_of_vec g.position in
 	Graphics.set_color goal_color;
-	Graphics.fill_rect (x - 1) (y - 1) 2 2
+	Graphics.fill_rect (x - (goal_size/2)) (y - (goal_size/2)) goal_size goal_size
+
+let draw_star (s : star) =
+	let (x, y) = ints_of_vec s.position in
+	Graphics.set_color star_color;
+	Graphics.fill_rect (x - (star_size/2)) (y - (star_size/2)) star_size star_size
 
 let draw_ball (b : ball) =
 	let (x, y) = ints_of_vec b.position in
@@ -61,6 +70,7 @@ let draw_entity e =
 	| Rope(r) -> draw_rope r
 	| Elastic(e) -> draw_elastic e
 	| Goal(g) -> draw_goal g
+	| Star(s) -> draw_star s
 
 (* Newton's method *)
 let find_zero f x0 =
