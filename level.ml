@@ -19,29 +19,33 @@ let parse_vec l =
 	let (y, l) = parse_float l in
 	({x; y}, l)
 
-let parse_ball l =
+let parse_ball l : ball =
 	let (position, l) = parse_vec l in
 	{position; speed = vec0; links = []}
 
-let parse_bubble l =
+let parse_bubble l : bubble =
 	let (position, l) = parse_vec l in
 	let (radius, _) = parse_float l in
 	{position; radius}
 
-let parse_rope l =
+let parse_rope l : rope =
 	let (position, l) = parse_vec l in
 	let (radius, l) = parse_float l in
 	let (length, _) = parse_float l in
 	{position; radius; length}
 
-let parse_elastic l =
+let parse_elastic l : elastic =
 	let (position, l) = parse_vec l in
 	let (radius, l) = parse_float l in
 	let (length, _) = parse_float l in
 	let (stiffness, _) = parse_float l in
 	{position; radius; length; stiffness}
 
-let parse_goal l =
+let parse_goal l : goal =
+	let (position, l) = parse_vec l in
+	{position}
+
+let parse_star l : star =
 	let (position, l) = parse_vec l in
 	{position}
 
@@ -51,6 +55,7 @@ let parse_entity t l =
 	| "rope" -> Rope (parse_rope l)
 	| "elastic" -> Elastic (parse_elastic l)
 	| "goal" -> Goal (parse_goal l)
+	| "star" -> Star (parse_star l)
 	| _ -> raise Invalid_format
 
 let parse_line l gs =
@@ -106,12 +111,16 @@ let fields_of_elastic (e : elastic) =
 let fields_of_goal (g : goal) =
 	cons_vec g.position []
 
+let fields_of_star (s : star) =
+	cons_vec s.position []
+
 let fields_of_entity e =
 	match e with
 	| Bubble(b) -> "bubble"::(fields_of_bubble b)
 	| Rope(r) -> "rope"::(fields_of_rope r)
 	| Elastic(e) -> "elastic"::(fields_of_elastic e)
 	| Goal(g) -> "goal"::(fields_of_goal g)
+	| Star(s) -> "star"::(fields_of_star s)
 
 let output ch gs =
 	set_binary_mode_out ch true;
