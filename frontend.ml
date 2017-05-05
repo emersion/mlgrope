@@ -5,6 +5,8 @@ open Unix
 open Mlgrope
 open Backend
 
+exception OutOfBoundsException
+
 let tick_rate = 1. /. 60.
 
 let ball_color = Graphics.black
@@ -138,18 +140,6 @@ let draw s =
 	List.iter draw_entity s.entities;
 	List.iter (draw_link s.ball) s.ball.links
 
-let step g =
-	let t = Unix.gettimeofday () in
-	let dt = t -. g.time in
-	let g = { g with
-		time = t;
-		state = if g.paused then g.state else Backend.move g.state dt
-	} in
-	Graphics.clear_graph ();
-	draw g.state;
-	Graphics.synchronize ();
-	g
-
 let is_bubble_at pos ball e =
 	match e with
 	| Bubble(bubble) -> dist pos ball.position <= bubble.radius
@@ -196,6 +186,31 @@ let is_rope_at lastpos pos ball e =
 	match e with
 	| Rope(rope) -> intersect_segments rope.position ball.position lastpos pos
 	| _ -> false
+
+let check_ball_bounds size b =
+	let (has_bubble, has_rope) = List.fold_left (fun (has_bubble, has_rope) e ->
+		match e with
+		| Bubble(_) -> (true, has_rope)
+		| Rope(_) | Elastic(_) -> (has_bubble, true)
+		| _ -> (has_bubble, has_rope)
+	) (false, false) b.links in
+	if has_bubble && b.position.y <= 0. then () else
+	if has_rope then () else
+	if not (intersect_box_point {x = 0.; y = 0.} size b.position)
+	then raise OutOfBoundsException
+
+let step g =
+	let t = Unix.gettimeofday () in
+	let dt = t -. g.time in
+	let g = { g with
+		time = t;
+		state = if g.paused then g.state else Backend.move g.state dt
+	} in
+	check_ball_bounds g.size g.state.ball;
+	Graphics.clear_graph ();
+	draw g.state;
+	Graphics.synchronize ();
+	g
 
 let handle_click ball lastpos pos =
 	let is_bubble = is_bubble_at pos ball in
