@@ -108,16 +108,15 @@ let compute_forces pos linkList =
 		| _ -> acc
 		) ([],false) linkList in
 	if isBubble then linkList else gravity::linkList
-		(* TODO : ajouter la réaction du support *)
 
 let compute_reaction pos sumForces colList linkList =
 	List.fold_left (fun acc e ->
 		match e with
 		| Rope(r) -> if List.mem e linkList && dist pos r.position >= r.length
-			then (projection (-1. * sumForces) (r.position - pos))::acc
+			then (projection (-1. * sumForces) (r.position - pos)) + acc
 			else acc
 		| _ -> acc
-	) [] colList
+	) sumForces colList
 
 (* I need to move the ball where it can go *)
 (* pos = previous pos, newPos position it would go to without any constraint *)
@@ -129,7 +128,7 @@ let apply_constraint b sumForces col =
 		else b.speed
 	| _ -> b.speed
 
-(* Aplly constraints one after the other *)
+(* Apply constraints one after the other *)
 let rec apply_constraints b sumForces colList linkList =
 	match colList with
 	| h::t -> if List.mem h linkList
@@ -139,15 +138,15 @@ let rec apply_constraints b sumForces colList linkList =
 	| [] -> b.speed
 
 (* Handles collisions *)
-(* let compute_position pos colList linkist =
+let compute_position pos colList linkList =
 	List.fold_left (fun acc e ->
-			match colList with
+			match e with
 			| Rope(r) ->
 				if List.mem e linkList && dist pos r.position >= r.length
-				then r.length * (direction r.position pos)
+				then r.length * (direction r.position pos) + r.position
 				else pos
-			| [] -> pos
-	) pos *)
+			| _ -> pos
+	) pos colList
 
 let sum_force l =
 	List.fold_left (+) { x = 0.; y = 0. } l
@@ -162,10 +161,9 @@ let ball_move g dt =
 	let newLinks = update_links colList b.links in
 	let newLinks = link_entities ent {b with links = newLinks} in
 	(* compute links impact on the forces / movement / position *)
-	let reactionList = compute_reaction b.position sumForces colList newLinks in
-	let sumForces = sumForces + sum_force reactionList in
+	let sumForces = compute_reaction b.position sumForces colList newLinks in
 	let newSpeed = (apply_constraints b sumForces colList newLinks) + dt * sumForces in
-	let newPos = b.position + dt * newSpeed in
+	let newPos = compute_position (b.position + dt * newSpeed) colList newLinks in
 	let newB = {
 		position = newPos;
 		speed = newSpeed;
