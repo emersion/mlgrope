@@ -59,10 +59,3 @@ type game_state = {
 	ball : ball;
 	entities : entity list;
 }
-
-type game = {
-	size : vec;
-	time : float;
-	paused : bool;
-	state : game_state;
-}

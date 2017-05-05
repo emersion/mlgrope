@@ -1,5 +1,4 @@
 open Arg
-open Unix
 
 open Mlgrope
 open Level
@@ -10,14 +9,8 @@ let size = {x = 500.; y = 500.}
 
 let play path =
 	let ch = open_in path in
-	let state = Level.input ch in
-	let g = {
-		size;
-		time = Unix.gettimeofday ();
-		paused = false;
-		state;
-	} in
-	Game.run g;
+	let gs = Level.input ch in
+	Game.run size gs;
 	raise Exit
 
 let edit path =

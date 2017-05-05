@@ -6,6 +6,12 @@ open Frontend
 
 exception OutOfBoundsException
 
+type game = {
+	size : vec;
+	time : float;
+	paused : bool;
+	state : Mlgrope.game_state;
+}
 
 let is_bubble_at pos ball e =
 	match e with
@@ -75,7 +81,7 @@ let step g =
 	} in
 	check_ball_bounds g.size g.state.ball;
 	Graphics.clear_graph ();
-	draw g.state;
+	Frontend.draw g.state;
 	Graphics.synchronize ();
 	g
 
@@ -99,5 +105,11 @@ let handle_event g s s' =
 	| {keypressed = true; key = 'p'} -> {g with paused = not g.paused}
 	| _ -> g
 
-let run g =
-	Frontend.run step handle_event g.size g
+let run size state =
+	let g = {
+		size;
+		time = Unix.gettimeofday ();
+		paused = false;
+		state;
+	} in
+	Frontend.run step handle_event size g
