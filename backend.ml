@@ -162,8 +162,6 @@ let ball_move g dt =
 	let newLinks = link_entities ent {b with links = newLinks} in
 	(* compute links impact on the forces / movement / position *)
 	let sumForces = compute_reaction b.position sumForces colList newLinks in
-	Printf.printf "%f %f \n %!" sumForces.x sumForces.y;
-	Printf.printf "%f %f \n %!" b.position.x sumForces.y;
 	let newSpeed = (apply_constraints b sumForces colList newLinks) + dt * sumForces in
 	let newPos = compute_position (b.position + dt * newSpeed) colList newLinks in
 	let newB = {
