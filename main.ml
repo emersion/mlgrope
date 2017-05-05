@@ -3,7 +3,7 @@ open Unix
 
 open Mlgrope
 open Level
-open Frontend
+open Game
 open Editor
 
 let play path =
@@ -15,7 +15,7 @@ let play path =
 		paused = false;
 		state;
 	} in
-	Frontend.run g
+	Game.run g
 
 let edit path =
 	let ch = open_in path in

@@ -1,3 +1,7 @@
+open Graphics
+
 open Mlgrope
 
-val run : Mlgrope.game -> unit
+val run : ('a -> 'a) -> ('a -> Graphics.status -> 'a) -> vec -> 'a -> unit
+
+val draw : Mlgrope.game_state -> unit
