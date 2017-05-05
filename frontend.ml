@@ -53,6 +53,11 @@ let draw_star (s : star) =
 	Graphics.set_color star_color;
 	Graphics.fill_rect (x - (star_size/2)) (y - (star_size/2)) star_size star_size
 
+let draw_block (b : block) =
+	let l = List.map ints_of_vec b.vertices in
+	Graphics.set_color b.color;
+	Graphics.fill_poly (Array.of_list l)
+
 let draw_ball (b : ball) =
 	let (x, y) = ints_of_vec b.position in
 	Graphics.set_color ball_color;
@@ -71,6 +76,7 @@ let draw_entity e =
 	| Elastic(e) -> draw_elastic e
 	| Goal(g) -> draw_goal g
 	| Star(s) -> draw_star s
+	| Block(b) -> draw_block b
 
 (* Newton's method *)
 let find_zero f x0 =

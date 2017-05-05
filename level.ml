@@ -1,4 +1,5 @@
 open String
+open Graphics
 
 open Mlgrope
 
@@ -11,6 +12,13 @@ let parse_field f default l =
 	| h::t -> (f h, t)
 	| [] -> (default, [])
 
+let rec parse_field_list f l =
+	match l with
+	| [] -> []
+	| _ ->
+		let (v, l) = f l in
+		v::(parse_field_list f l)
+
 let parse_float l =
 	parse_field float_of_string 0. l
 
@@ -18,6 +26,10 @@ let parse_vec l =
 	let (x, l) = parse_float l in
 	let (y, l) = parse_float l in
 	({x; y}, l)
+
+let parse_color l : (Graphics.color * string list) =
+	let (i, l) = parse_field int_of_string 0 l in
+	(i, l)
 
 let parse_ball l : ball =
 	let (position, l) = parse_vec l in
@@ -49,13 +61,19 @@ let parse_star l : star =
 	let (position, l) = parse_vec l in
 	{position}
 
+let parse_block l : block =
+	let (color, l) = parse_color l in
+	let vertices = parse_field_list parse_vec l in
+	{vertices; color}
+
 let parse_entity t l =
 	match t with
-	| "bubble" -> Bubble (parse_bubble l)
-	| "rope" -> Rope (parse_rope l)
-	| "elastic" -> Elastic (parse_elastic l)
-	| "goal" -> Goal (parse_goal l)
-	| "star" -> Star (parse_star l)
+	| "bubble" -> Bubble(parse_bubble l)
+	| "rope" -> Rope(parse_rope l)
+	| "elastic" -> Elastic(parse_elastic l)
+	| "goal" -> Goal(parse_goal l)
+	| "star" -> Star(parse_star l)
+	| "block" -> Block(parse_block l)
 	| _ -> raise Invalid_format
 
 let parse_line l gs =
@@ -96,6 +114,9 @@ let cons_float f l =
 let cons_vec v l =
 	cons_float v.x (cons_float v.y l)
 
+let cons_color (c : Graphics.color) l =
+	("0x"^(Printf.sprintf "%X" c))::l
+
 let fields_of_ball (b : ball) =
 	cons_vec b.position []
 
@@ -114,6 +135,9 @@ let fields_of_goal (g : goal) =
 let fields_of_star (s : star) =
 	cons_vec s.position []
 
+let fields_of_block (b : block) =
+	cons_color b.color (List.fold_left (fun l v -> cons_vec v l) [] b.vertices)
+
 let fields_of_entity e =
 	match e with
 	| Bubble(b) -> "bubble"::(fields_of_bubble b)
@@ -121,6 +145,7 @@ let fields_of_entity e =
 	| Elastic(e) -> "elastic"::(fields_of_elastic e)
 	| Goal(g) -> "goal"::(fields_of_goal g)
 	| Star(s) -> "star"::(fields_of_star s)
+	| Block(b) -> "block"::(fields_of_block b)
 
 let output ch gs =
 	set_binary_mode_out ch true;
