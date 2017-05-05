@@ -28,11 +28,16 @@ type goal = {
 	position : vec;
 }
 
+type star = {
+	position : vec;
+}
+
 type entity =
 	| Bubble of bubble
 	| Rope of rope
 	| Goal of goal
 	| Elastic of elastic
+	| Star of star
 
 type ball = {
 	position : vec;
