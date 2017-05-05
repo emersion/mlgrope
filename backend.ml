@@ -55,15 +55,17 @@ let find_rope l = List.exists (fun e -> match e with | Rope(r) -> true	| _ -> fa
 let clear_entities col entl =
 	List.fold_left (fun acc e ->
 		match e with
+		| Star(s) -> if (List.mem e col) then acc else e::acc
 		| Bubble(bu) -> if (List.mem e col) then acc else e::acc
 		| _ -> e::acc
 		) [] entl
 
 let check_collision b ent =
 	match ent with
-	| Goal(g) ->
-		let d = squared_dist g.position b.position in
+	| Goal(g) -> let d = squared_dist g.position b.position in
 		if Mlgrope.ball_radius**2. >= d then raise TouchedGoalException else false
+	| Star(s) -> let d = squared_dist s.position b.position in
+		Mlgrope.ball_radius**2. >= d
 	| Bubble(bu) ->
 		let d = squared_dist bu.position b.position in
 		(Mlgrope.ball_radius +. bu.radius)**2. >= d
