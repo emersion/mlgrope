@@ -66,18 +66,6 @@ let clear_entities col entl =
 		| _ -> e::acc
 		) [] entl
 
-(* Add links that needs to be added, col = collision list, l = link list *)
-(* TODO : separate in Two fun (if GP contains spikes)
- 		* add_links
-		* remove_links
-*)
-let rec update_links col links =
-	List.fold_left (fun acc e ->
-		match e with
-		| Bubble(bu) -> e::acc
-		| _ -> acc
-		) links col
-
 let check_collision b ent =
 	match ent with
 	| Goal(g) ->
@@ -95,6 +83,16 @@ let check_collisions b entl =
 	List.fold_left (fun acc e -> if check_collision b e then e::acc else acc)
 	[] entl
 
+
+(* Add links that needs to be added according to collisions *)
+let rec update_links col links =
+	List.fold_left (fun acc e ->
+		match e with
+		| Bubble(bu) -> e::acc
+		| _ -> acc
+		) links col
+
+(* Add links tant needs to be added according to entity list *)
 let link_entities entl b =
 	List.fold_left (fun acc e ->
 									match e with
@@ -160,7 +158,7 @@ let ball_move g dt =
 	(* print_forces forceList; *)
 	let sumForces = sumForces + sum_force reactionList in
 	let newLinks = update_links colList b.links in
-	let newLinks = link_entities ent b in
+	let newLinks = link_entities ent {b with links = newLinks} in
 	let newSpeed = (apply_constraints b sumForces colList) + dt * sumForces in
 	let newPos = b.position + dt * newSpeed in
 	let newB = {
