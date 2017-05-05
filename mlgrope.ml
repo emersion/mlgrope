@@ -1,3 +1,5 @@
+open Graphics
+
 type vec = {
 	x : float;
 	y : float;
@@ -35,12 +37,18 @@ type star = {
 	position : vec;
 }
 
+type block = {
+	vertices : vec list;
+	color : Graphics.color;
+}
+
 type entity =
 	| Bubble of bubble
 	| Rope of rope
 	| Goal of goal
 	| Elastic of elastic
 	| Star of star
+	| Block of block
 
 type ball = {
 	position : vec;
