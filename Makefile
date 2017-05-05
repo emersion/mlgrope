@@ -1,8 +1,8 @@
 OCAMLC ?= ocamlc
 CFLAGS = -thread
 CMAS = graphics.cma unix.cma threads.cma
-CMIS = mlgrope.cmi backend.cmi frontend.cmi level.cmi
-CMOS = mlgrope.cmo backend.cmo frontend.cmo level.cmo main.cmo
+CMIS = mlgrope.cmi backend.cmi frontend.cmi level.cmi editor.cmi
+CMOS = mlgrope.cmo backend.cmo frontend.cmo level.cmo editor.cmo main.cmo
 
 all: mlgrope
 clean:

@@ -2,8 +2,9 @@ open Arg
 open Unix
 
 open Mlgrope
-open Frontend
 open Level
+open Frontend
+open Editor
 
 let play path =
 	let ch = open_in path in
@@ -19,8 +20,7 @@ let play path =
 let edit path =
 	let ch = open_in path in
 	let state = Level.input ch in
-	(* TODO *)
-	raise Exit
+	Editor.run state
 
 let () =
 	Arg.parse [
