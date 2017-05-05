@@ -1,3 +1,5 @@
+open Graphics
+
 open Mlgrope
 open Frontend
 
@@ -8,7 +10,9 @@ let step gs =
 	gs
 
 let handle_event gs s s' =
-	gs
+	match s' with
+	| {keypressed = true; key = '\027'} -> raise Exit
+	| _ -> gs
 
 let run size gs =
 	Frontend.run step handle_event size gs

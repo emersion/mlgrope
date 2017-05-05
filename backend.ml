@@ -73,11 +73,6 @@ let check_collision pos ent =
 		dist r.position pos >= r.length
 	| _ -> false
 
-let check_collisions pos entl =
-	List.fold_left (fun acc e -> if check_collision pos e then e::acc else acc)
-	[] entl
-
-
 (* Add links that needs to be added according to collisions *)
 let rec update_links col links =
 	List.fold_left (fun acc e ->
@@ -157,7 +152,7 @@ let ball_move g dt =
 	(* Compute new pos *)
 	let b = g.ball in
 	let ent = g.entities in
-	let colList = check_collisions b.position ent in
+	let colList = List.filter (check_collision b.position) ent in
 	let forceList = compute_forces b.position b.links in
 	let sumForces = sum_force forceList in
 	let newLinks = update_links colList b.links in
