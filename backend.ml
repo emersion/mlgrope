@@ -60,21 +60,21 @@ let clear_entities col entl =
 		| _ -> e::acc
 		) [] entl
 
-let check_collision b ent =
+let check_collision pos ent =
 	match ent with
-	| Goal(g) -> let d = squared_dist g.position b.position in
+	| Goal(g) -> let d = squared_dist g.position pos in
 		if Mlgrope.ball_radius**2. >= d then raise TouchedGoalException else false
-	| Star(s) -> let d = squared_dist s.position b.position in
+	| Star(s) -> let d = squared_dist s.position pos in
 		Mlgrope.ball_radius**2. >= d
 	| Bubble(bu) ->
-		let d = squared_dist bu.position b.position in
+		let d = squared_dist bu.position pos in
 		(Mlgrope.ball_radius +. bu.radius)**2. >= d
 	| Rope(r) ->
-		dist r.position b.position >= r.length
+		dist r.position pos >= r.length
 	| _ -> false
 
-let check_collisions b entl =
-	List.fold_left (fun acc e -> if check_collision b e then e::acc else acc)
+let check_collisions pos entl =
+	List.fold_left (fun acc e -> if check_collision pos e then e::acc else acc)
 	[] entl
 
 
@@ -157,7 +157,7 @@ let ball_move g dt =
 	(* Compute new pos *)
 	let b = g.ball in
 	let ent = g.entities in
-	let colList = check_collisions b ent in
+	let colList = check_collisions b.position ent in
 	let forceList = compute_forces b.position b.links in
 	let sumForces = sum_force forceList in
 	let newLinks = update_links colList b.links in
