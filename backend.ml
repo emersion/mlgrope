@@ -55,8 +55,7 @@ let find_rope l = List.exists (fun e -> match e with | Rope(r) -> true	| _ -> fa
 let clear_entities col entl =
 	List.fold_left (fun acc e ->
 		match e with
-		| Star(s) -> if (List.mem e col) then acc else e::acc
-		| Bubble(bu) -> if (List.mem e col) then acc else e::acc
+		| Bubble(_) | Star(_) -> if (List.mem e col) then acc else e::acc
 		| _ -> e::acc
 		) [] entl
 
