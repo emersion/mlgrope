@@ -40,7 +40,6 @@ let normalize v =
 
 let fold_segments f acc l =
 	match l with
-	| [pt] -> f acc (pt, pt)
 	| h::t ->
 		let (_, acc) = List.fold_left (fun (last, acc) v ->
 			(v, f acc (last, v))
