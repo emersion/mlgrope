@@ -50,8 +50,6 @@ let step ed =
 	);
 	ed
 
-let round_float x = snd (modf (x +. copysign 0.5 x))
-
 let stick_to_grid pt =
 	Math2d.map (fun k -> grid_size *. round_float (k /. grid_size)) pt
 

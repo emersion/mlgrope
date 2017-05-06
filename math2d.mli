@@ -1,3 +1,4 @@
+val round_float : float -> float
 val is_between : float -> float -> float -> bool
 
 type vec = {
