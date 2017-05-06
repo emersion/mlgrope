@@ -1,3 +1,5 @@
+val is_between : float -> float -> float -> bool
+
 type vec = {
 	x : float;
 	y : float;

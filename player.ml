@@ -1,6 +1,7 @@
 open Graphics
 
 open Math2d
+open Collide
 open Mlgrope
 open Backend
 open Frontend
@@ -19,46 +20,9 @@ let is_bubble_at pos ball e =
 	| Bubble(bubble) -> dist pos ball.position <= bubble.radius
 	| _ -> false
 
-let is_between a b x =
-	(min a b) <= x && x <= (max a b)
-
-let intersect_box_point a b pos =
-	is_between a.x b.x pos.x && is_between a.y b.y pos.y
-
-let line_equation a b =
-	let k = (b.y -. a.y) /. (b.x -. a.x) in
-	let y0 = a.y -. a.x *. k in
-	let f x = k *. x +. y0 in
-	(k, y0, f)
-
-let intersect_line_point a b pos =
-	let (k, y0, f) = line_equation a b in
-	abs_float ((f pos.x) -. pos.y) <= 5.
-
-let intersect_lines a b a' b' =
-	(*
-	k*x + y0 = k'*x + y0'
-	x*(k - k') = y0' - y0
-	x = (y0' - y0) / (k - k')
-	*)
-	if a == a' && b == b' then Some(a) else
-	let (k, y0, f) = line_equation a b in
-	let (k', y0', f') = line_equation a' b' in
-	let x = (y0' -. y0) /. (k -. k') in
-	let (y, y') = (f x, f' x) in
-	if abs_float (y -. y') <= 1. then Some({x; y}) else None
-
-let intesect_segment_point a b pos =
-	intersect_box_point a b pos && intersect_line_point a b pos
-
-let intersect_segments a b a' b' =
-	match intersect_lines a b a' b' with
-	| Some(pt) -> intersect_box_point a b pt && intersect_box_point a' b' pt
-	| None -> false
-
 let is_rope_at lastpos pos ball e =
 	match e with
-	| Rope(rope) -> intersect_segments rope.position ball.position lastpos pos
+	| Rope(rope) -> Collide.segments rope.position ball.position lastpos pos
 	| _ -> false
 
 let check_ball_bounds size b =
@@ -70,7 +34,7 @@ let check_ball_bounds size b =
 	) (false, false) b.links in
 	if has_bubble && b.position.y <= 0. then () else
 	if has_rope then () else
-	if not (intersect_box_point {x = 0.; y = 0.} size b.position)
+	if not (Collide.box_point {x = 0.; y = 0.} size b.position)
 	then raise OutOfBoundsException
 
 let step g =
