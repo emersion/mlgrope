@@ -15,9 +15,7 @@ let play path =
 	raise Exit
 
 let edit path =
-	let ch = open_in path in
-	let gs = Level.input ch in
-	Editor.run size gs;
+	Editor.run size path;
 	raise Exit
 
 let () =

@@ -4,6 +4,7 @@ open Math2d
 open Mlgrope
 open Backend
 open Frontend
+open Level
 
 type editor_object =
 	| Entity of entity
@@ -41,19 +42,23 @@ let update_entity_position e position =
 	| Star(b) -> Star{position}
 	| e -> e
 
-let handle_event ed s s' =
+let update_ball_position (b : ball) position =
+	{b with position}
+
+let handle_event path ed s s' =
 	let pos = Frontend.vec_of_status s' in
 	match (s, s') with
 	| ({button = false}, {button = true}) -> (
 		try
 			let selected = List.find (intersect_entity pos) ed.state.entities in
-			let entities = List.filter (fun e -> e != selected) ed.state.entities in
-			let selected = update_entity_position selected pos in
-			let entities = selected::entities in
-			{ed with state = {ed.state with entities}; selected = Some(Entity(selected))}
+			let updated = update_entity_position selected pos in
+			let entities = List.map (fun e ->
+				if e == selected then updated else e
+			) ed.state.entities in
+			{ed with state = {ed.state with entities}; selected = Some(Entity(updated))}
 		with Not_found ->
 			if intersect_ball pos ed.state.ball then
-				let ball = {ed.state.ball with position = pos} in
+				let ball = update_ball_position ed.state.ball pos in
 				{ed with state = {ed.state with ball}; selected = Some(Ball(ball))}
 			else ed
 	)
@@ -67,18 +72,29 @@ let handle_event ed s s' =
 			let selected = if button then Some(Entity(updated)) else None in
 			{ed with state = {ed.state with entities}; selected}
 		| Some(Ball(ball)) ->
-			let ball = {ball with position = pos} in
-			{ed with state = {ed.state with ball}; selected = Some(Ball(ball))}
+			let ball = update_ball_position ball pos in
+			let selected = if button then Some(Ball(ball)) else None in
+			{ed with state = {ed.state with ball}; selected}
 		| _ -> ed
 	)
 	| (_, {keypressed = true; key = '\027'}) -> raise Exit
+	| (_, {keypressed = true; key = 'w'}) ->
+		let ch = open_out path in
+		Level.output ch ed.state;
+		close_out ch;
+		Printf.printf "Saved %s\n%!" path;
+		ed
 	| _ -> ed
 
-let run size state =
+let run size path =
+	let ch = open_in path in
+	let state = Level.input ch in
+	close_in ch;
+
 	let ed = {
 		size;
 		state;
 		selected = None;
 	}
 	in
-	Frontend.run step handle_event size ed
+	Frontend.run step (handle_event path) size ed

@@ -111,7 +111,7 @@ let output_fields ch l =
 	output_string ch (l^"\n")
 
 let cons_float f l =
-	(string_of_float f)::l
+	(string_of_int (int_of_float f))::l
 
 let cons_vec v l =
 	cons_float v.x (cons_float v.y l)
