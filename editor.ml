@@ -91,6 +91,9 @@ let run size path =
 	let state = Level.input ch in
 	close_in ch;
 
+	Printf.printf "Loaded %s\n%!" path;
+	Printf.printf "Press w to save\n%!";
+
 	let ed = {
 		size;
 		state;
