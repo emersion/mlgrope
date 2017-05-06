@@ -37,3 +37,17 @@ let length v =
 
 let normalize v =
 	{x = v.x /. (length v); y  = v.y /. (length v)}
+
+let fold_segments f acc l =
+	match l with
+	| [pt] -> f acc (pt, pt)
+	| h::t ->
+		let (_, acc) = List.fold_left (fun (last, acc) v ->
+			(v, f acc (last, v))
+		) (h, acc) t in
+		acc
+	| [] -> acc
+
+let average l =
+	let (sum, n) = List.fold_left (fun (sum, n) v -> (sum +: v, n+1)) (vec0, 0) l in
+	(1. /. float_of_int n) *: sum

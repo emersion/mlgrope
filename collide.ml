@@ -10,8 +10,16 @@ let line_equation a b =
 	(k, y0, f)
 
 let line_point a b pos =
+	if a.x = b.x then a.x = pos.x else
 	let (k, y0, f) = line_equation a b in
 	abs_float ((f pos.x) -. pos.y) <= 5.
+
+let line_vertical a b x =
+	if a.x = b.x then
+		if a.x = x then Some(a) else None
+	else
+		let (_, _, f) = line_equation a b in
+		Some({x; y = f x})
 
 let lines a b a' b' =
 	(*
@@ -19,7 +27,9 @@ let lines a b a' b' =
 	x*(k - k') = y0' - y0
 	x = (y0' - y0) / (k - k')
 	*)
-	if a == a' && b == b' then Some(a) else
+	if a =: a' && b =: b' then Some(a) else
+	if a.x = b.x then line_vertical a' b' a.x else
+	if a'.x = b'.x then line_vertical a b a'.x else
 	let (k, y0, f) = line_equation a b in
 	let (k', y0', f') = line_equation a' b' in
 	let x = (y0' -. y0) /. (k -. k') in
@@ -33,3 +43,11 @@ let segments a b a' b' =
 	match lines a b a' b' with
 	| Some(pt) -> box_point a b pt && box_point a' b' pt
 	| None -> false
+
+(* Ray casting algorithm *)
+let polygon_point l pos =
+	let (a, b) = (pos, {pos with x = infinity}) in
+	let n = fold_segments (fun n (a', b') ->
+		if segments a b a' b' then n+1 else n
+	) 0 l in
+	n mod 2 = 1

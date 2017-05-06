@@ -2,6 +2,7 @@ open Sys
 open Graphics
 
 open Math2d
+open Collide
 open Mlgrope
 open Backend
 open Frontend
@@ -56,6 +57,7 @@ let intersect_entity pt ent =
 		Frontend.star_radius**2. >= squared_distance position pt
 	| Bubble{position; radius} | Rope{position; radius} ->
 		radius**2. >= squared_distance position pt
+	| Block{vertices} -> Collide.polygon_point vertices pt
 	| _ -> false
 
 let intersect_ball pt (b : ball) =
@@ -76,7 +78,11 @@ let update_entity_position e position =
 	| Elastic(b) -> Elastic{b with position}
 	| Goal(b) -> Goal{position}
 	| Star(b) -> Star{position}
-	| e -> e
+	| Block(b) ->
+		let center = average b.vertices in
+		let delta = position -: center in
+		let vertices = List.map (fun v -> v +: delta) b.vertices in
+		Block{b with vertices}
 
 let update_position ed obj position =
 	match obj with
