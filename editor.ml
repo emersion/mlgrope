@@ -61,6 +61,14 @@ let intersect_entity pt ent =
 let intersect_ball pt (b : ball) =
 	Mlgrope.ball_radius**2. >= squared_distance b.position pt
 
+let intersect_object pt state =
+	try
+		Some(Entity(List.find (intersect_entity pt) state.entities))
+	with Not_found ->
+		if intersect_ball pt state.ball then
+			Some(Ball(state.ball))
+		else None
+
 let update_entity_position e position =
 	match e with
 	| Bubble(b) -> Bubble{b with position}
@@ -70,48 +78,44 @@ let update_entity_position e position =
 	| Star(b) -> Star{position}
 	| e -> e
 
-let update_ball_position (b : ball) position =
-	{b with position}
+let update_position ed obj position =
+	match obj with
+	| Entity(entity) ->
+		let updated = update_entity_position entity position in
+		let entities = List.map (fun e ->
+			if e == entity then updated else e
+		) ed.state.entities in
+		{ed with state = {ed.state with entities}; selected = Some(Entity(updated))}
+	| Ball(ball) ->
+		let ball = {ball with position} in
+		{ed with state = {ed.state with ball}; selected = Some(Ball(ball))}
+
+let remove ed obj =
+	let entities = match obj with
+	| Entity(entity) -> List.filter (fun e -> e != entity) ed.state.entities
+	| _ -> ed.state.entities
+	in
+	{ed with state = {ed.state with entities}; selected = None}
 
 let handle_event path ed s s' =
 	let pos = Frontend.vec_of_status s' in
 	match (s, s') with
 	| ({button = false}, {button = true}) -> (
-		try
-			let selected = List.find (intersect_entity pos) ed.state.entities in
-			let updated = update_entity_position selected pos in
-			let entities = List.map (fun e ->
-				if e == selected then updated else e
-			) ed.state.entities in
-			{ed with state = {ed.state with entities}; selected = Some(Entity(updated))}
-		with Not_found ->
-			if intersect_ball pos ed.state.ball then
-				let ball = update_ball_position ed.state.ball pos in
-				{ed with state = {ed.state with ball}; selected = Some(Ball(ball))}
-			else ed
+		match intersect_object pos ed.state with
+		| Some(obj) -> update_position ed obj pos
+		| None -> ed
 	)
 	| ({button = true}, {button}) -> (
 		if not button && pos.x > ed.size.x then
-			let entities = match ed.selected with
-			| Some(Entity(selected)) ->
-				List.filter (fun e -> e != selected) ed.state.entities
-			| _ -> ed.state.entities
-			in
-			{ed with state = {ed.state with entities}; selected = None}
-		else
 			match ed.selected with
-			| Some(Entity(selected)) ->
-				let updated = update_entity_position selected pos in
-				let entities = List.map (fun e ->
-					if e == selected then updated else e
-				) ed.state.entities in
-				let selected = if button then Some(Entity(updated)) else None in
-				{ed with state = {ed.state with entities}; selected}
-			| Some(Ball(ball)) ->
-				let ball = update_ball_position ball pos in
-				let selected = if button then Some(Ball(ball)) else None in
-				{ed with state = {ed.state with ball}; selected}
-			| _ -> ed
+			| Some(obj) -> remove ed obj
+			| None -> ed
+		else
+			let ed = match ed.selected with
+			| Some(obj) -> update_position ed obj pos
+			| None -> ed
+			in
+			if button then ed else {ed with selected = None}
 	)
 	| (_, {keypressed = true; key = '\027'}) -> raise Exit
 	| (_, {keypressed = true; key = 'w'}) ->
