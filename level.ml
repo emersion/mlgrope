@@ -92,6 +92,7 @@ let input ch =
 		try
 			let l = String.trim (input_line ch) in
 			if String.length l == 0 then input gs else
+			if l.[0] == '#' then input gs else
 			let l = String.split_on_char ',' l in
 			let gs = parse_line l gs in
 			input gs
