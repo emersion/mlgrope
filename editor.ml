@@ -7,6 +7,9 @@ open Backend
 open Frontend
 open Level
 
+let panel_width = 100.
+let panel_color = Graphics.rgb (255/2) (255/2) (255/2)
+
 type editor_object =
 	| Entity of entity
 	| Ball of ball
@@ -17,8 +20,16 @@ type editor = {
 	selected : editor_object option;
 }
 
+let draw_panel size =
+	let (w, h) = ints_of_vec size in
+	Graphics.set_color panel_color;
+	Graphics.fill_rect w 0 (w + int_of_float panel_width) h
+
 let step ed =
-	Frontend.step (fun () -> Frontend.draw ed.state);
+	Frontend.step (fun () ->
+		draw_panel ed.size;
+		Frontend.draw ed.state;
+	);
 	ed
 
 let intersect_entity pt ent =
@@ -64,19 +75,27 @@ let handle_event path ed s s' =
 			else ed
 	)
 	| ({button = true}, {button}) -> (
-		match ed.selected with
-		| Some(Entity(selected)) ->
-			let updated = update_entity_position selected pos in
-			let entities = List.map (fun e ->
-				if e == selected then updated else e
-			) ed.state.entities in
-			let selected = if button then Some(Entity(updated)) else None in
-			{ed with state = {ed.state with entities}; selected}
-		| Some(Ball(ball)) ->
-			let ball = update_ball_position ball pos in
-			let selected = if button then Some(Ball(ball)) else None in
-			{ed with state = {ed.state with ball}; selected}
-		| _ -> ed
+		if not button && pos.x > ed.size.x then
+			let entities = match ed.selected with
+			| Some(Entity(selected)) ->
+				List.filter (fun e -> e != selected) ed.state.entities
+			| _ -> ed.state.entities
+			in
+			{ed with state = {ed.state with entities}; selected = None}
+		else
+			match ed.selected with
+			| Some(Entity(selected)) ->
+				let updated = update_entity_position selected pos in
+				let entities = List.map (fun e ->
+					if e == selected then updated else e
+				) ed.state.entities in
+				let selected = if button then Some(Entity(updated)) else None in
+				{ed with state = {ed.state with entities}; selected}
+			| Some(Ball(ball)) ->
+				let ball = update_ball_position ball pos in
+				let selected = if button then Some(Ball(ball)) else None in
+				{ed with state = {ed.state with ball}; selected}
+			| _ -> ed
 	)
 	| (_, {keypressed = true; key = '\027'}) -> raise Exit
 	| (_, {keypressed = true; key = 'w'}) ->
@@ -114,4 +133,4 @@ let run size path =
 		selected = None;
 	}
 	in
-	Frontend.run step (handle_event path) size ed
+	Frontend.run step (handle_event path) (size +: {x = panel_width; y = 0.}) ed

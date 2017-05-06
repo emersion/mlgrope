@@ -7,6 +7,7 @@ type vec = {
 
 val vec0 : vec
 
+val ints_of_vec : vec -> (int * int)
 val squared_distance : vec -> vec -> float
 val distance : vec -> vec -> float
 val (=:) : vec -> vec -> bool

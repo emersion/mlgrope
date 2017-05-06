@@ -23,9 +23,6 @@ let mix a b t =
 let mix_vec v1 v2 t =
 	{ x = mix v1.x v2.x t; y = mix v1.y v2.y t }
 
-let ints_of_vec p =
-	(int_of_float p.x, int_of_float p.y)
-
 let vec_of_status s =
 	{x = float_of_int s.mouse_x; y = float_of_int s.mouse_y}
 
