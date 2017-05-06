@@ -18,15 +18,15 @@ let step ed =
 let intersect_entity pt ent =
 	match ent with
 	| Goal{position} ->
-		Frontend.goal_radius**2. >= squared_dist position pt
+		Frontend.goal_radius**2. >= squared_distance position pt
 	| Star{position} ->
-		Frontend.star_radius**2. >= squared_dist position pt
+		Frontend.star_radius**2. >= squared_distance position pt
 	| Bubble{position; radius} | Rope{position; radius} ->
-		radius**2. >= squared_dist position pt
+		radius**2. >= squared_distance position pt
 	| _ -> false
 
 let intersect_ball pt (b : ball) =
-	Mlgrope.ball_radius**2. >= squared_dist b.position pt
+	Mlgrope.ball_radius**2. >= squared_distance b.position pt
 
 let update_entity_position e position =
 	match e with

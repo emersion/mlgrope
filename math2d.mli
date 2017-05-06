@@ -5,12 +5,12 @@ type vec = {
 	y : float;
 }
 
-val squared_dist : vec -> vec -> float
-val dist : vec -> vec -> float
+val squared_distance : vec -> vec -> float
+val distance : vec -> vec -> float
 val (=:) : vec -> vec -> bool
 val (+:) : vec -> vec -> vec
 val (-:) : vec -> vec -> vec
 val ( *:) : float -> vec -> vec
 val dot : vec -> vec -> float
-val norm : vec -> float
+val length : vec -> float
 val normalize : vec -> vec

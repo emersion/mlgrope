@@ -16,9 +16,9 @@ let direction v1 v2 =
 (* v1 -> v2 -> v projects v1 on v2 according to y result is v *)
 let projection v1 v2 =
 	(* a : la direction, co le cosinus *)
-	let co = (dot v1 v2) /. ((norm v1) *. (norm v2)) in
-	let a = { x = v2.x /. (norm v2); y = v2.y /. (norm v2) } in
-	((norm v1) *. co) *: a
+	let co = (dot v1 v2) /. ((Math2d.length v1) *. (Math2d.length v2)) in
+	let a = { x = v2.x /. (Math2d.length v2); y = v2.y /. (Math2d.length v2) } in
+	((Math2d.length v1) *. co) *: a
 
 let elastic_force d (e : elastic) =
 	(d/.250. *. e.stiffness)**2.0
@@ -39,15 +39,15 @@ let clear_entities col entl =
 
 let check_collision pos ent =
 	match ent with
-	| Goal(g) -> let d = squared_dist g.position pos in
+	| Goal(g) -> let d = squared_distance g.position pos in
 		if Mlgrope.ball_radius**2. >= d then raise TouchedGoalException else false
-	| Star(s) -> let d = squared_dist s.position pos in
+	| Star(s) -> let d = squared_distance s.position pos in
 		Mlgrope.ball_radius**2. >= d
 	| Bubble(bu) ->
-		let d = squared_dist bu.position pos in
+		let d = squared_distance bu.position pos in
 		(Mlgrope.ball_radius +. bu.radius)**2. >= d
 	| Rope(r) ->
-		dist r.position pos >= r.length
+		squared_distance r.position pos >= r.length**2.
 	| _ -> false
 
 (* Add links that needs to be added according to collisions *)
@@ -62,7 +62,7 @@ let rec update_links col links =
 let link_entities entl b =
 	List.fold_left (fun acc e ->
 									match e with
-									| Rope(r) -> 	if dist r.position b.position <= r.radius
+									| Rope(r) -> 	if distance r.position b.position <= r.radius
 																	&& (not (List.mem e acc))
 																then e::acc
 																else acc
@@ -75,7 +75,7 @@ let compute_forces pos linkList =
 	let (linkList,isBubble) = List.fold_left (fun acc e ->
 		match e with
 		| Bubble(bu) -> ({gravity with y = 0.5*. abs_float gravity.y}::(fst acc), true)
-		| Elastic(e) -> let d = dist pos e.position in
+		| Elastic(e) -> let d = distance pos e.position in
 			if d >= e.length
 			then ((elastic_force d e) *: direction pos e.position ::(fst acc), snd acc)
 			else acc
@@ -86,7 +86,7 @@ let compute_forces pos linkList =
 let compute_reaction pos sumForces colList linkList =
 	List.fold_left (fun acc e ->
 		match e with
-		| Rope(r) -> if List.mem e linkList && dist pos r.position >= r.length
+		| Rope(r) -> if List.mem e linkList && distance pos r.position >= r.length
 			then (projection (-1. *: sumForces) (r.position -: pos)) +: acc
 			else acc
 		| _ -> acc
@@ -97,7 +97,7 @@ let compute_reaction pos sumForces colList linkList =
 let apply_constraint b sumForces col =
 	match col with
 	| Rope(r) ->
-		if dist b.position r.position >= r.length
+		if distance b.position r.position >= r.length
 		then projection b.speed sumForces
 		else b.speed
 	| _ -> b.speed
@@ -116,7 +116,7 @@ let compute_position pos colList linkList =
 	List.fold_left (fun acc e ->
 			match e with
 			| Rope(r) ->
-				if List.mem e linkList && dist pos r.position >= r.length
+				if List.mem e linkList && distance pos r.position >= r.length
 				then r.length *: (direction r.position pos) +: r.position
 				else pos
 			| _ -> pos

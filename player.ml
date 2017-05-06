@@ -17,7 +17,7 @@ type game = {
 
 let is_bubble_at pos ball e =
 	match e with
-	| Bubble(bubble) -> dist pos ball.position <= bubble.radius
+	| Bubble(bubble) -> distance pos ball.position <= bubble.radius
 	| _ -> false
 
 let is_rope_at lastpos pos ball e =
