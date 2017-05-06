@@ -1,3 +1,4 @@
+open Math2d
 open Mlgrope
 
-val run : Mlgrope.vec -> Mlgrope.game_state -> unit
+val run : vec -> game_state -> unit

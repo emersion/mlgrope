@@ -1,5 +1,6 @@
 open Graphics
 
+open Math2d
 open Mlgrope
 open Backend
 open Frontend

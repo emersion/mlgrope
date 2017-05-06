@@ -1,3 +1,4 @@
+open Math2d
 open Mlgrope
 
 exception TouchedGoalException
@@ -8,39 +9,16 @@ let print_forces l =
 (* gravity constant = -150 px.s-2 *)
 let gravity = { x = 0.; y = -150. }
 
-let (+) v1 v2 =
-	{ x = v1.x +. v2.x; y = v1.y +. v2.y }
-
-let (=) v1 v2 =
-	v1.x = v2.x && v1.y = v2.y
-
-let (-) v1 v2 =
-	{ x = v1.x -. v2.x; y = v1.y -. v2.y }
-
-let ( * ) s v  =
-	{ x = s *. v.x; y = s *. v.y }
-
-let abs x = if x >= 0.0 then x else -. x
-
-let dot v1 v2  =
-	v1.x *. v2.x +. v1.y *. v2.y
-
-let norm v =
-	sqrt (v.x**2. +. v.y**2.)
-
-let normalize v =
-	{x = v.x /. (norm v); y  = v.y /. (norm v)}
-
 (* vecteur de norme 1 dans la direction v1v2 *)
 let direction v1 v2 =
-	normalize (v2 - v1)
+	normalize (v2 -: v1)
 
 (* v1 -> v2 -> v projects v1 on v2 according to y result is v *)
 let projection v1 v2 =
 	(* a : la direction, co le cosinus *)
 	let co = (dot v1 v2) /. ((norm v1) *. (norm v2)) in
 	let a = { x = v2.x /. (norm v2); y = v2.y /. (norm v2) } in
-	((norm v1) *. co) * a
+	((norm v1) *. co) *: a
 
 let elastic_force d (e : elastic) =
 	(d/.250. *. e.stiffness)**2.0
@@ -96,10 +74,10 @@ let link_entities entl b =
 let compute_forces pos linkList =
 	let (linkList,isBubble) = List.fold_left (fun acc e ->
 		match e with
-		| Bubble(bu) -> ({gravity with y = 0.5*. abs gravity.y}::(fst acc), true)
+		| Bubble(bu) -> ({gravity with y = 0.5*. abs_float gravity.y}::(fst acc), true)
 		| Elastic(e) -> let d = dist pos e.position in
 			if d >= e.length
-			then ((elastic_force d e) * direction pos e.position ::(fst acc), snd acc)
+			then ((elastic_force d e) *: direction pos e.position ::(fst acc), snd acc)
 			else acc
 		| _ -> acc
 		) ([],false) linkList in
@@ -109,7 +87,7 @@ let compute_reaction pos sumForces colList linkList =
 	List.fold_left (fun acc e ->
 		match e with
 		| Rope(r) -> if List.mem e linkList && dist pos r.position >= r.length
-			then (projection (-1. * sumForces) (r.position - pos)) + acc
+			then (projection (-1. *: sumForces) (r.position -: pos)) +: acc
 			else acc
 		| _ -> acc
 	) sumForces colList
@@ -139,13 +117,13 @@ let compute_position pos colList linkList =
 			match e with
 			| Rope(r) ->
 				if List.mem e linkList && dist pos r.position >= r.length
-				then r.length * (direction r.position pos) + r.position
+				then r.length *: (direction r.position pos) +: r.position
 				else pos
 			| _ -> pos
 	) pos colList
 
 let sum_force l =
-	List.fold_left (+) { x = 0.; y = 0. } l
+	List.fold_left (+:) { x = 0.; y = 0. } l
 
 let ball_move g dt =
 	(* Compute new pos *)
@@ -158,8 +136,8 @@ let ball_move g dt =
 	let newLinks = link_entities ent {b with links = newLinks} in
 	(* compute links impact on the forces / movement / position *)
 	let sumForces = compute_reaction b.position sumForces colList newLinks in
-	let newSpeed = (apply_constraints b sumForces colList newLinks) + dt * sumForces in
-	let newPos = compute_position (b.position + dt * newSpeed) colList newLinks in
+	let newSpeed = (apply_constraints b sumForces colList newLinks) +: dt *: sumForces in
+	let newPos = compute_position (b.position +: dt *: newSpeed) colList newLinks in
 	let newB = {
 		position = newPos;
 		speed = newSpeed;

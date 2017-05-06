@@ -1,12 +1,6 @@
 open Graphics
 
-type vec = {
-	x : float;
-	y : float;
-}
-
-val squared_dist : vec -> vec -> float
-val dist : vec -> vec -> float
+open Math2d
 
 type bubble = {
 	position : vec;

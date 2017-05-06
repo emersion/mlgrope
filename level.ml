@@ -1,6 +1,7 @@
 open String
 open Graphics
 
+open Math2d
 open Mlgrope
 
 exception Invalid_format

@@ -1,5 +1,6 @@
 open Arg
 
+open Math2d
 open Mlgrope
 open Level
 open Player
