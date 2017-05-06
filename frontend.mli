@@ -2,6 +2,9 @@ open Graphics
 
 open Mlgrope
 
+val goal_radius : float
+val star_radius : float
+
 val vec_of_status : status -> vec
 val draw : Mlgrope.game_state -> unit
 val step : (unit -> unit) -> unit

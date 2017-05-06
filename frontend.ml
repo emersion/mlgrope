@@ -13,8 +13,8 @@ let rope_color = Graphics.green
 let goal_color = Graphics.blue
 let star_color = Graphics.yellow
 
-let goal_size = 10
-let star_size = 10
+let goal_radius = 5.
+let star_radius = 5.
 
 let mix a b t =
 	t *. a +. (1. -. t) *. b
@@ -46,13 +46,15 @@ let draw_elastic (e : elastic) =
 
 let draw_goal (g : goal) =
 	let (x, y) = ints_of_vec g.position in
+	let r = int_of_float goal_radius in
 	Graphics.set_color goal_color;
-	Graphics.fill_rect (x - (goal_size/2)) (y - (goal_size/2)) goal_size goal_size
+	Graphics.fill_rect (x - r) (y - r) (r*2) (r*2)
 
 let draw_star (s : star) =
 	let (x, y) = ints_of_vec s.position in
+	let r = int_of_float star_radius in
 	Graphics.set_color star_color;
-	Graphics.fill_rect (x - (star_size/2)) (y - (star_size/2)) star_size star_size
+	Graphics.fill_rect (x - r) (y - r) (r*2) (r*2)
 
 let draw_block (b : block) =
 	let l = List.map ints_of_vec b.vertices in
