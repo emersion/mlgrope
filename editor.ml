@@ -5,10 +5,14 @@ open Mlgrope
 open Backend
 open Frontend
 
+type editor_object =
+	| Entity of entity
+	| Ball of ball
+
 type editor = {
 	size : vec;
 	state: game_state;
-	selected : bool;
+	selected : editor_object option;
 }
 
 let step ed =
@@ -40,23 +44,33 @@ let update_entity_position e position =
 let handle_event ed s s' =
 	let pos = Frontend.vec_of_status s' in
 	match (s, s') with
-	| ({button = false}, {button = true}) ->
-		(try
+	| ({button = false}, {button = true}) -> (
+		try
 			let selected = List.find (intersect_entity pos) ed.state.entities in
 			let entities = List.filter (fun e -> e != selected) ed.state.entities in
 			let selected = update_entity_position selected pos in
 			let entities = selected::entities in
-			{ed with state = {ed.state with entities}; selected = true}
-		with Not_found -> ed)
-	| ({button = true}, {button}) ->
-		if ed.selected then
-			match ed.state.entities with
-			| selected::entities ->
-				let selected = update_entity_position selected pos in
-				let entities = selected::entities in
-				{ed with state = {ed.state with entities}; selected = button}
-			| _ -> ed
-		else ed
+			{ed with state = {ed.state with entities}; selected = Some(Entity(selected))}
+		with Not_found ->
+			if intersect_ball pos ed.state.ball then
+				let ball = {ed.state.ball with position = pos} in
+				{ed with state = {ed.state with ball}; selected = Some(Ball(ball))}
+			else ed
+	)
+	| ({button = true}, {button}) -> (
+		match ed.selected with
+		| Some(Entity(selected)) ->
+			let updated = update_entity_position selected pos in
+			let entities = List.map (fun e ->
+				if e == selected then updated else e
+			) ed.state.entities in
+			let selected = if button then Some(Entity(updated)) else None in
+			{ed with state = {ed.state with entities}; selected}
+		| Some(Ball(ball)) ->
+			let ball = {ball with position = pos} in
+			{ed with state = {ed.state with ball}; selected = Some(Ball(ball))}
+		| _ -> ed
+	)
 	| (_, {keypressed = true; key = '\027'}) -> raise Exit
 	| _ -> ed
 
@@ -64,7 +78,7 @@ let run size state =
 	let ed = {
 		size;
 		state;
-		selected = false;
+		selected = None;
 	}
 	in
 	Frontend.run step handle_event size ed
