@@ -11,6 +11,9 @@ let vec0 = {x = 0.; y = 0.}
 let ints_of_vec p =
 	(int_of_float p.x, int_of_float p.y)
 
+let map f v =
+	{x = f v.x; y = f v.y}
+
 let squared_distance a b =
 	(a.x -. b.x)**2. +. (a.y -. b.y)**2.
 

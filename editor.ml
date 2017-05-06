@@ -11,7 +11,7 @@ open Level
 let panel_width = 100.
 let panel_color = Graphics.rgb 127 127 127
 
-let grid_size = 10
+let grid_size = 10.
 let grid_color = Graphics.rgb 230 230 230
 
 type editor_object =
@@ -25,6 +25,7 @@ type editor = {
 }
 
 let draw_grid size =
+	let grid_size = int_of_float grid_size in
 	let (w, h) = ints_of_vec size in
 	Graphics.set_color grid_color;
 	for i = 0 to w/grid_size do
@@ -48,6 +49,11 @@ let step ed =
 		Frontend.draw ed.state;
 	);
 	ed
+
+let round_float x = snd (modf (x +. copysign 0.5 x))
+
+let stick_to_grid pt =
+	Math2d.map (fun k -> grid_size *. round_float (k /. grid_size)) pt
 
 let intersect_entity pt ent =
 	match ent with
@@ -105,6 +111,11 @@ let remove ed obj =
 
 let handle_event path ed s s' =
 	let pos = Frontend.vec_of_status s' in
+	let outside = pos.x > ed.size.x in
+	let update_position ed obj pos =
+		let pos = if outside then pos else stick_to_grid pos in
+		update_position ed obj pos
+	in
 	match (s, s') with
 	| ({button = false}, {button = true}) -> (
 		match intersect_object pos ed.state with
@@ -112,7 +123,7 @@ let handle_event path ed s s' =
 		| None -> ed
 	)
 	| ({button = true}, {button}) -> (
-		if not button && pos.x > ed.size.x then
+		if not button && outside then
 			match ed.selected with
 			| Some(obj) -> remove ed obj
 			| None -> ed
