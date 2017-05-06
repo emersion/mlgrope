@@ -34,7 +34,7 @@ let check_ball_bounds size b =
 	) (false, false) b.links in
 	if has_bubble && b.position.y <= 0. then () else
 	if has_rope then () else
-	if not (Collide.box_point {x = 0.; y = 0.} size b.position)
+	if not (Collide.box_point vec0 size b.position)
 	then raise OutOfBoundsException
 
 let step g =

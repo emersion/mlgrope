@@ -5,6 +5,8 @@ type vec = {
 	y : float;
 }
 
+val vec0 : vec
+
 val squared_distance : vec -> vec -> float
 val distance : vec -> vec -> float
 val (=:) : vec -> vec -> bool

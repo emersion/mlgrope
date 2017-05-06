@@ -6,6 +6,8 @@ type vec = {
 	y : float;
 }
 
+let vec0 = {x = 0.; y = 0.}
+
 let squared_distance a b =
 	(a.x -. b.x)**2. +. (a.y -. b.y)**2.
 

@@ -1,3 +1,4 @@
+open Sys
 open Graphics
 
 open Math2d
@@ -87,11 +88,24 @@ let handle_event path ed s s' =
 	| _ -> ed
 
 let run size path =
-	let ch = open_in path in
-	let state = Level.input ch in
-	close_in ch;
+	let state =
+		if Sys.file_exists path then
+			let ch = open_in path in
+			let state = Level.input ch in
+			close_in ch;
+			Printf.printf "Loaded %s\n%!" path;
+			state
+		else
+			{
+				ball = {
+					position = 0.5 *: size;
+					speed = vec0;
+					links = [];
+				};
+				entities = [];
+			}
+	in
 
-	Printf.printf "Loaded %s\n%!" path;
 	Printf.printf "Press w to save\n%!";
 
 	let ed = {
