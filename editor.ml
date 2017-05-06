@@ -8,7 +8,10 @@ open Frontend
 open Level
 
 let panel_width = 100.
-let panel_color = Graphics.rgb (255/2) (255/2) (255/2)
+let panel_color = Graphics.rgb 127 127 127
+
+let grid_size = 10
+let grid_color = Graphics.rgb 230 230 230
 
 type editor_object =
 	| Entity of entity
@@ -20,6 +23,18 @@ type editor = {
 	selected : editor_object option;
 }
 
+let draw_grid size =
+	let (w, h) = ints_of_vec size in
+	Graphics.set_color grid_color;
+	for i = 0 to w/grid_size do
+		Graphics.moveto (i*grid_size) 0;
+		Graphics.lineto (i*grid_size) h
+	done;
+	for i = 0 to h/grid_size do
+		Graphics.moveto 0 (i*grid_size);
+		Graphics.lineto w (i*grid_size)
+	done
+
 let draw_panel size =
 	let (w, h) = ints_of_vec size in
 	Graphics.set_color panel_color;
@@ -27,6 +42,7 @@ let draw_panel size =
 
 let step ed =
 	Frontend.step (fun () ->
+		draw_grid ed.size;
 		draw_panel ed.size;
 		Frontend.draw ed.state;
 	);
