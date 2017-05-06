@@ -139,6 +139,11 @@ let draw s =
 	List.iter draw_entity s.entities;
 	List.iter (draw_link s.ball) s.ball.links
 
+let step f =
+	Graphics.clear_graph ();
+	f ();
+	Graphics.synchronize ()
+
 let run step handle_event size g =
 	let (w, h) = (int_of_float size.x, int_of_float size.y) in
 	Graphics.open_graph (" "^(string_of_int w)^"x"^(string_of_int h));

@@ -11,9 +11,7 @@ type editor = {
 }
 
 let step ed =
-	Graphics.clear_graph ();
-	Frontend.draw ed.state;
-	Graphics.synchronize ();
+	Frontend.step (fun () -> Frontend.draw ed.state);
 	ed
 
 let update_entity_position e position =

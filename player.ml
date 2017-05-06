@@ -80,9 +80,7 @@ let step g =
 		state = if g.paused then g.state else Backend.move g.state dt
 	} in
 	check_ball_bounds g.size g.state.ball;
-	Graphics.clear_graph ();
-	Frontend.draw g.state;
-	Graphics.synchronize ();
+	Frontend.step (fun () -> Frontend.draw g.state);
 	g
 
 let handle_click ball lastpos pos =
