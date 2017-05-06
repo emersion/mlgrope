@@ -14,6 +14,7 @@ let rope_color = Graphics.green
 let goal_color = Graphics.blue
 let star_color = Graphics.yellow
 
+let rope_inner_radius = 5.
 let goal_radius = 5.
 let star_radius = 5.
 
@@ -35,11 +36,13 @@ let draw_bubble (b : bubble) =
 let draw_rope (r : rope) =
 	let (x, y) = ints_of_vec r.position in
 	Graphics.set_color rope_color;
+	Graphics.fill_circle x y (int_of_float rope_inner_radius);
 	Graphics.draw_circle x y (int_of_float r.radius)
 
 let draw_elastic (e : elastic) =
 	let (x, y) = ints_of_vec e.position in
 	Graphics.set_color rope_color;
+	Graphics.fill_circle x y (int_of_float rope_inner_radius);
 	Graphics.draw_circle x y (int_of_float e.radius)
 
 let draw_goal (g : goal) =
