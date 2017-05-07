@@ -151,6 +151,7 @@ let run step handle_event size g =
 	let (w, h) = (int_of_float size.x, int_of_float size.y) in
 	Graphics.open_graph (" "^(string_of_int w)^"x"^(string_of_int h));
 	Graphics.auto_synchronize false;
+	Graphics.set_window_title "Mlgrope";
 
 	let g = ref (step g) in
 	let s = ref {mouse_x = 0; mouse_y = 0; button = false; keypressed = false; key = '\000'} in
