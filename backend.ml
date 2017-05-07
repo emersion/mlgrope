@@ -20,6 +20,23 @@ let projection v1 v2 =
 	let a = { x = v2.x /. (Math2d.length v2); y = v2.y /. (Math2d.length v2) } in
 	((Math2d.length v1) *. co) *: a
 
+let collision_cercle_point center radius p =
+	squared_distance center p <= radius ** 2.
+
+let collision_cercle_droite center radius p1 p2=
+	let u = p2 -: p1 in
+	let ac = center -: p1 in
+	let d = (length ({x = u.x *. ac.y -. u.y *. ac.x; y = 0.})) /. (length u) in
+	radius <= d
+
+let collision_cercle_seg center radius p1 p2 =
+	collision_cercle_droite center radius p1 p2
+	&& ( dot (p2 -: p1) (center -: p1) >= 0. && dot (p1 -: p2) (center -: p2) >= 0.
+			|| collision_cercle_point center radius p1
+			|| collision_cercle_point center radius p2
+			)
+
+
 let elastic_force d (e : elastic) =
 	(d/.250. *. e.stiffness)**2.0
 
@@ -43,11 +60,10 @@ let check_collision pos ent =
 		if Mlgrope.ball_radius**2. >= d then raise TouchedGoalException else false
 	| Star(s) -> let d = squared_distance s.position pos in
 		Mlgrope.ball_radius**2. >= d
-	| Bubble(bu) ->
-		let d = squared_distance bu.position pos in
+	| Bubble(bu) ->	let d = squared_distance bu.position pos in
 		(Mlgrope.ball_radius +. bu.radius)**2. >= d
-	| Rope(r) ->
-		squared_distance r.position pos >= r.length**2.
+	| Rope(r) -> squared_distance r.position pos >= r.length**2.
+	(* | Block(b) -> *)
 	| _ -> false
 
 (* Add links that needs to be added according to collisions *)
@@ -61,13 +77,17 @@ let rec update_links col links =
 (* Add links tant needs to be added according to entity list *)
 let link_entities entl b =
 	List.fold_left (fun acc e ->
-									match e with
-									| Rope(r) -> 	if distance r.position b.position <= r.radius
-																	&& (not (List.mem e acc))
-																then e::acc
-																else acc
-									| _ -> acc
-								)	b.links entl
+		match e with
+		| Rope(r) -> 	if squared_distance r.position b.position <= r.radius**2.
+										&& (not (List.mem e acc))
+									then e::acc
+									else acc
+		| Elastic(el) -> if squared_distance el.position b.position <= el.radius**2.
+										&& (not (List.mem e acc))
+									then e::acc
+									else acc
+		| _ -> acc
+	)	b.links entl
 
 (* ball pos, Link list : entity list -> Forces list : position list *)
 (* Collision response *)
