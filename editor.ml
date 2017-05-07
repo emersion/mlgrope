@@ -37,10 +37,27 @@ let draw_grid size =
 		Graphics.lineto w (i*grid_size)
 	done
 
+let panel_entities size =
+	let n = 5 in
+	let x = size.x +. (panel_width /. 2.) in
+	let h = round_float (size.y /. (float_of_int (n+1))) in
+	let radius = 20. in
+	[
+		Bubble{position = {x; y = h}; radius};
+		Rope{position = {x; y = 2.*.h}; radius; length = radius};
+		Elastic{position = {x; y = 3.*.h}; radius; length = radius; stiffness = 1.};
+		Goal{position = {x; y = 4.*.h}};
+		Star{position = {x; y = 5.*.h}};
+		(* TODO: block *)
+	]
+
 let draw_panel size =
 	let (w, h) = ints_of_vec size in
 	Graphics.set_color panel_color;
-	Graphics.fill_rect w 0 (w + int_of_float panel_width) h
+	Graphics.fill_rect w 0 (w + int_of_float panel_width) h;
+
+	let l = panel_entities size in
+	List.iter Frontend.draw_entity l
 
 let step ed =
 	Frontend.step (fun () ->
@@ -118,7 +135,14 @@ let handle_event path ed s s' =
 	| ({button = false}, {button = true}) -> (
 		match intersect_object pos ed.state with
 		| Some(obj) -> update_position ed obj pos
-		| None -> ed
+		| None -> (
+			let l = panel_entities ed.size in
+			try
+				let e = List.find (intersect_entity pos) l in
+				let ed = {ed with state = {ed.state with entities = e::ed.state.entities}} in
+				update_position ed (Entity(e)) pos
+			with Not_found -> ed
+		)
 	)
 	| ({button = true}, {button}) -> (
 		if not button && outside then
