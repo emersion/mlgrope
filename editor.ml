@@ -165,7 +165,13 @@ let run size path =
 			Printf.printf "Loaded %s\n%!" path;
 			state
 		else
-			[]
+			[
+				Ball{
+					position = 0.5 *: size;
+					speed = vec0;
+					links = [];
+				};
+			]
 	in
 
 	Printf.printf "Press w to save\n%!";
