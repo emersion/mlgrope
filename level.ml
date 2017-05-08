@@ -6,8 +6,6 @@ open Mlgrope
 
 exception Invalid_format
 
-let vec0 = {x = 0.; y = 0.}
-
 let parse_field f default l =
 	match l with
 	| h::t -> (f h, t)
@@ -69,6 +67,7 @@ let parse_block l : block =
 
 let parse_entity t l =
 	match t with
+	| "ball" -> Ball(parse_ball l)
 	| "bubble" -> Bubble(parse_bubble l)
 	| "rope" -> Rope(parse_rope l)
 	| "elastic" -> Elastic(parse_elastic l)
@@ -79,15 +78,11 @@ let parse_entity t l =
 
 let parse_line l gs =
 	match l with
-	| "ball"::l -> {gs with ball = parse_ball l}
-	| t::l -> {gs with entities = (parse_entity t l)::gs.entities}
+	| t::l -> (parse_entity t l)::gs
 	| _ -> gs
 
 let input ch =
-	(* Default values *)
-	let vec0 = {x = 0.; y = 0.} in
-	let ball = {position = vec0; speed = vec0; links = []} in
-	let gs = {ball; entities = []} in
+	let gs = [] in
 
 	let rec input gs =
 		try
@@ -142,6 +137,7 @@ let fields_of_block (b : block) =
 
 let fields_of_entity e =
 	match e with
+	| Ball(b) -> "ball"::(fields_of_ball b)
 	| Bubble(b) -> "bubble"::(fields_of_bubble b)
 	| Rope(r) -> "rope"::(fields_of_rope r)
 	| Elastic(e) -> "elastic"::(fields_of_elastic e)
@@ -151,7 +147,5 @@ let fields_of_entity e =
 
 let output ch gs =
 	set_binary_mode_out ch true;
-	output_fields ch ("ball"::(fields_of_ball gs.ball));
-	output_char ch '\n';
-	List.iter (fun e -> output_fields ch (fields_of_entity e)) gs.entities;
+	List.iter (fun e -> output_fields ch (fields_of_entity e)) gs;
 	flush ch

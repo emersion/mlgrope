@@ -23,11 +23,12 @@ let projection v1 v2 =
 let elastic_force d (e : elastic) =
 	(d/.250. *. e.stiffness)**2.0
 
-let remove_from_list o l = List.filter (fun e -> o != e) l
-
-let find_bubble l = List.exists (fun e -> match e with | Bubble(bu) -> true	| _ -> false) l
-
-let find_rope l = List.exists (fun e -> match e with | Rope(r) -> true	| _ -> false) l
+let fold_balls f acc l =
+	List.fold_left (fun acc e ->
+		match e with
+		| Ball(b) -> f acc b
+		| _ -> acc
+	) acc l
 
 (* Col = colision list, entl = entities *)
 let clear_entities col entl =
@@ -123,29 +124,21 @@ let compute_position pos colList linkList =
 	) pos colList
 
 let sum_force l =
-	List.fold_left (+:) { x = 0.; y = 0. } l
+	List.fold_left (+:) vec0 l
 
-let ball_move g dt =
-	(* Compute new pos *)
-	let b = g.ball in
-	let ent = g.entities in
-	let colList = List.filter (check_collision b.position) ent in
-	let forceList = compute_forces b.position b.links in
+let ball_move ball gs dt =
+	let colList = List.filter (check_collision ball.position) gs in
+	let forceList = compute_forces ball.position ball.links in
 	let sumForces = sum_force forceList in
-	let newLinks = update_links colList b.links in
-	let newLinks = link_entities ent {b with links = newLinks} in
+	let links = update_links colList ball.links in
+	let links = link_entities gs {ball with links} in
 	(* compute links impact on the forces / movement / position *)
-	let sumForces = compute_reaction b.position sumForces colList newLinks in
-	let newSpeed = (apply_constraints b sumForces colList newLinks) +: dt *: sumForces in
-	let newPos = compute_position (b.position +: dt *: newSpeed) colList newLinks in
-	let newB = {
-		position = newPos;
-		speed = newSpeed;
-		links = newLinks;
-	} in
-	let ent = clear_entities colList ent in
-	{ball = newB; entities = ent}
+	let sumForces = compute_reaction ball.position sumForces colList links in
+	let speed = (apply_constraints ball sumForces colList links) +: dt *: sumForces in
+	let position = compute_position (ball.position +: dt *: speed) colList links in
+	let updated = {position; speed; links} in
+	let gs = clear_entities colList gs in
+	List.map (update_ball ball updated) gs
 
-let move g dt =
-	let g = (ball_move g dt) in
-	g
+let move gs dt =
+	fold_balls (fun gs b -> ball_move b gs dt) gs gs

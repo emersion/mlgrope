@@ -44,7 +44,11 @@ let step g =
 		time = t;
 		state = if g.paused then g.state else Backend.move g.state dt
 	} in
-	check_ball_bounds g.size g.state.ball;
+	List.iter (fun e ->
+		match e with
+		| Ball(b) -> check_ball_bounds g.size b
+		| _ -> ()
+	) g.state;
 	Frontend.step (fun () -> Frontend.draw g.state);
 	g
 
@@ -63,7 +67,12 @@ let handle_event g s s' =
 		| {button = true; mouse_x; mouse_y} -> {x = float_of_int mouse_x; y = float_of_int mouse_y}
 		| _ -> pos
 		in
-		{g with state = {g.state with ball = handle_click g.state.ball lastpos pos}}
+		let state = List.map (fun e ->
+			match e with
+			| Ball(b) -> Ball(handle_click b lastpos pos)
+			| _ -> e
+		) g.state in
+		{g with state}
 	| {keypressed = true; key = '\027'} -> raise Exit
 	| {keypressed = true; key = 'p'} -> {g with paused = not g.paused}
 	| _ -> g

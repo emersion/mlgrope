@@ -14,14 +14,10 @@ let panel_color = Graphics.rgb 127 127 127
 let grid_size = 10.
 let grid_color = Graphics.rgb 230 230 230
 
-type editor_object =
-	| Entity of entity
-	| Ball of ball
-
 type editor = {
 	size : vec;
 	state: game_state;
-	selected : editor_object option;
+	selected : entity option;
 }
 
 let draw_grid size =
@@ -72,6 +68,8 @@ let stick_to_grid pt =
 
 let intersect_entity pt ent =
 	match ent with
+	| Ball{position} ->
+		Mlgrope.ball_radius**2. >= squared_distance position pt
 	| Goal{position} ->
 		Frontend.goal_radius**2. >= squared_distance position pt
 	| Star{position} ->
@@ -86,14 +84,12 @@ let intersect_ball pt (b : ball) =
 
 let intersect_object pt state =
 	try
-		Some(Entity(List.find (intersect_entity pt) state.entities))
-	with Not_found ->
-		if intersect_ball pt state.ball then
-			Some(Ball(state.ball))
-		else None
+		Some(List.find (intersect_entity pt) state)
+	with Not_found -> None
 
 let update_entity_position e position =
 	match e with
+	| Ball(b) -> Ball{b with position}
 	| Bubble(b) -> Bubble{b with position}
 	| Rope(b) -> Rope{b with position}
 	| Elastic(b) -> Elastic{b with position}
@@ -105,24 +101,19 @@ let update_entity_position e position =
 		let vertices = List.map (fun v -> v +: delta) b.vertices in
 		Block{b with vertices}
 
-let update_position ed obj position =
-	match obj with
-	| Entity(entity) ->
-		let updated = update_entity_position entity position in
-		let entities = List.map (fun e ->
-			if e == entity then updated else e
-		) ed.state.entities in
-		{ed with state = {ed.state with entities}; selected = Some(Entity(updated))}
-	| Ball(ball) ->
-		let ball = {ball with position} in
-		{ed with state = {ed.state with ball}; selected = Some(Ball(ball))}
+let update_position ed entity position =
+	let updated = update_entity_position entity position in
+	let state = List.map (fun e ->
+		if e == entity then updated else e
+	) ed.state in
+	{ed with state; selected = Some(updated)}
 
-let remove ed obj =
-	let entities = match obj with
-	| Entity(entity) -> List.filter (fun e -> e != entity) ed.state.entities
-	| _ -> ed.state.entities
-	in
-	{ed with state = {ed.state with entities}; selected = None}
+let remove ed entity =
+	match entity with
+	| Ball(_) -> ed
+	| _ ->
+		let state = List.filter (fun e -> e != entity) ed.state in
+		{ed with state; selected = None}
 
 let handle_event path ed s s' =
 	let pos = Frontend.vec_of_status s' in
@@ -139,8 +130,8 @@ let handle_event path ed s s' =
 			let l = panel_entities ed.size in
 			try
 				let e = List.find (intersect_entity pos) l in
-				let ed = {ed with state = {ed.state with entities = e::ed.state.entities}} in
-				update_position ed (Entity(e)) pos
+				let ed = {ed with state = e::ed.state} in
+				update_position ed e pos
 			with Not_found -> ed
 		)
 	)
@@ -174,14 +165,7 @@ let run size path =
 			Printf.printf "Loaded %s\n%!" path;
 			state
 		else
-			{
-				ball = {
-					position = 0.5 *: size;
-					speed = vec0;
-					links = [];
-				};
-				entities = [];
-			}
+			[]
 	in
 
 	Printf.printf "Press w to save\n%!";

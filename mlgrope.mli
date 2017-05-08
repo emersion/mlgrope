@@ -33,7 +33,13 @@ type block = {
 	color : Graphics.color;
 }
 
-type entity =
+type ball = {
+	position : vec;
+	speed : vec;
+	links : entity list;
+}
+and entity =
+	| Ball of ball
 	| Bubble of bubble
 	| Rope of rope
 	| Goal of goal
@@ -41,15 +47,8 @@ type entity =
 	| Star of star
 	| Block of block
 
-type ball = {
-	position : vec;
-	speed : vec;
-	links : entity list;
-}
+type game_state = entity list
 
 val ball_radius : float
 
-type game_state = {
-	ball : ball;
-	entities : entity list;
-}
+val update_ball : ball -> ball -> (entity -> entity)

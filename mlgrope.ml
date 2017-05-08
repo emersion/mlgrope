@@ -33,7 +33,13 @@ type block = {
 	color : Graphics.color;
 }
 
-type entity =
+type ball = {
+	position : vec;
+	speed : vec;
+	links : entity list;
+}
+and entity =
+	| Ball of ball
 	| Bubble of bubble
 	| Rope of rope
 	| Goal of goal
@@ -41,15 +47,12 @@ type entity =
 	| Star of star
 	| Block of block
 
-type ball = {
-	position : vec;
-	speed : vec;
-	links : entity list;
-}
+type game_state = entity list
 
 let ball_radius = 10.0
 
-type game_state = {
-	ball : ball;
-	entities : entity list;
-}
+let update_ball ball updated =
+	fun e ->
+		match e with
+		| Ball(b) -> if b == ball then Ball(updated) else e
+		| _ -> e

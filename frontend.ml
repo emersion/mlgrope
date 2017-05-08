@@ -62,26 +62,6 @@ let draw_block (b : block) =
 	Graphics.set_color b.color;
 	Graphics.fill_poly (Array.of_list l)
 
-let draw_ball (b : ball) =
-	let (x, y) = ints_of_vec b.position in
-	Graphics.set_color ball_color;
-	Graphics.fill_circle x y (int_of_float Mlgrope.ball_radius);
-
-	List.iter (fun e ->
-		match e with
-		| Bubble(bubble) -> draw_bubble {bubble with position = b.position}
-		| _ -> ()
-	) b.links
-
-let draw_entity e =
-	match e with
-	| Bubble(b) -> draw_bubble b
-	| Rope(r) -> draw_rope r
-	| Elastic(e) -> draw_elastic e
-	| Goal(g) -> draw_goal g
-	| Star(s) -> draw_star s
-	| Block(b) -> draw_block b
-
 (* Newton's method *)
 let find_zero f x0 =
 	let accuracy = 10.**(-4.) in
@@ -128,6 +108,7 @@ let create_rope_line a b l =
 
 let draw_link b l =
 	match l with
+	| Bubble(bubble) -> draw_bubble {bubble with position = b.position}
 	| Rope{position; length} | Elastic{position; length} ->
 		let line = build_poly_line (
 			try create_rope_line position b.position length
@@ -137,10 +118,25 @@ let draw_link b l =
 		Graphics.draw_poly_line line
 	| _ -> ()
 
-let draw s =
-	draw_ball s.ball;
-	List.iter draw_entity s.entities;
-	List.iter (draw_link s.ball) s.ball.links
+let draw_ball (b : ball) =
+	let (x, y) = ints_of_vec b.position in
+	Graphics.set_color ball_color;
+	Graphics.fill_circle x y (int_of_float Mlgrope.ball_radius);
+
+	List.iter (draw_link b) b.links
+
+let draw_entity e =
+	match e with
+	| Ball(b) -> draw_ball b
+	| Bubble(b) -> draw_bubble b
+	| Rope(r) -> draw_rope r
+	| Elastic(e) -> draw_elastic e
+	| Goal(g) -> draw_goal g
+	| Star(s) -> draw_star s
+	| Block(b) -> draw_block b
+
+let draw gs =
+	List.iter draw_entity gs
 
 let step f =
 	Graphics.clear_graph ();
