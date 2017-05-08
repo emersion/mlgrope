@@ -14,10 +14,16 @@ let panel_color = Graphics.rgb 127 127 127
 let grid_size = 10.
 let grid_color = Graphics.rgb 230 230 230
 
+type entity_property =
+	| Position
+	| Radius
+	| Vertex of vec
+
 type editor = {
 	size : vec;
 	state: game_state;
 	selected : entity option;
+	selected_property : entity_property;
 }
 
 let draw_grid size =
@@ -87,8 +93,8 @@ let intersect_object pt state =
 		Some(List.find (intersect_entity pt) state)
 	with Not_found -> None
 
-let update_entity_position e position =
-	match e with
+let update_position ed entity position =
+	let updated = match entity with
 	| Ball(b) -> Ball{b with position}
 	| Bubble(b) -> Bubble{b with position}
 	| Rope(b) -> Rope{b with position}
@@ -100,13 +106,17 @@ let update_entity_position e position =
 		let delta = position -: center in
 		let vertices = List.map (fun v -> v +: delta) b.vertices in
 		Block{b with vertices}
-
-let update_position ed entity position =
-	let updated = update_entity_position entity position in
+	in
 	let state = List.map (fun e ->
 		if e == entity then updated else e
 	) ed.state in
 	{ed with state; selected = Some(updated)}
+
+let update ed entity prop position =
+	match prop with
+	| Position -> update_position ed entity position
+	(* TODO *)
+	| _ -> ed
 
 let remove ed entity =
 	match entity with
@@ -118,31 +128,31 @@ let remove ed entity =
 let handle_event path ed s s' =
 	let pos = Frontend.vec_of_status s' in
 	let outside = pos.x > ed.size.x in
-	let update_position ed obj pos =
+	let update ed e prop pos =
 		let pos = if outside then pos else stick_to_grid pos in
-		update_position ed obj pos
+		update ed e prop pos
 	in
 	match (s, s') with
 	| ({button = false}, {button = true}) -> (
 		match intersect_object pos ed.state with
-		| Some(obj) -> update_position ed obj pos
+		| Some(e) -> update ed e ed.selected_property pos
 		| None -> (
 			let l = panel_entities ed.size in
 			try
 				let e = List.find (intersect_entity pos) l in
 				let ed = {ed with state = e::ed.state} in
-				update_position ed e pos
+				update ed e ed.selected_property pos
 			with Not_found -> ed
 		)
 	)
 	| ({button = true}, {button}) -> (
 		if not button && outside then
 			match ed.selected with
-			| Some(obj) -> remove ed obj
+			| Some(e) -> remove ed e
 			| None -> ed
 		else
 			let ed = match ed.selected with
-			| Some(obj) -> update_position ed obj pos
+			| Some(e) -> update ed e ed.selected_property pos
 			| None -> ed
 			in
 			if button then ed else {ed with selected = None}
@@ -180,6 +190,7 @@ let run size path =
 		size;
 		state;
 		selected = None;
+		selected_property = Position;
 	}
 	in
 	Frontend.run step (handle_event path) (size +: {x = panel_width; y = 0.}) ed
