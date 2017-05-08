@@ -51,4 +51,5 @@ type game_state = entity list
 
 val ball_radius : float
 
-val update_ball : ball -> ball -> (entity -> entity)
+val position_of_entity : entity -> vec
+val swap_ball : ball -> ball -> (entity -> entity)

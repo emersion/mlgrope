@@ -51,7 +51,14 @@ type game_state = entity list
 
 let ball_radius = 10.0
 
-let update_ball ball updated =
+let position_of_entity e =
+	match e with
+	| Ball{position} | Bubble{position} | Rope{position} | Goal{position}
+	| Elastic{position} | Star{position} ->
+		position
+	| Block{vertices} -> average vertices
+
+let swap_ball ball updated =
 	fun e ->
 		match e with
 		| Ball(b) -> if b == ball then Ball(updated) else e

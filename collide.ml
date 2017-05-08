@@ -51,3 +51,6 @@ let polygon_point l pos =
 		if segments a b a' b' then n+1 else n
 	) 0 l in
 	n mod 2 = 1
+
+let circle_point center radius pos =
+	radius *. radius >= squared_distance center pos

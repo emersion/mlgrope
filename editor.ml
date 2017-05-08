@@ -14,6 +14,9 @@ let panel_color = Graphics.rgb 127 127 127
 let grid_size = 10.
 let grid_color = Graphics.rgb 230 230 230
 
+let handle_size = 10.
+let handle_color = Graphics.black
+
 type entity_property =
 	| Position
 	| Radius
@@ -61,19 +64,37 @@ let draw_panel size =
 	let l = panel_entities size in
 	List.iter Frontend.draw_entity l
 
+let handle_position e =
+	match e with
+	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
+		position +: {x = radius; y = 0.} (* TODO: draw handle in a corner *)
+	| _ -> raise Not_found
+
+let draw_radius_handle e =
+	match e with
+	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
+		let (x, y) = ints_of_vec position in
+		let r = int_of_float radius in
+		let (x, y) = (x + r, y) in (* TODO: draw handle in a corner *)
+		let hs = int_of_float handle_size in
+		Graphics.set_color handle_color;
+		Graphics.fill_rect (x - hs/2) (y - hs/2) hs hs
+	| _ -> ()
+
 let step ed =
 	Frontend.step (fun () ->
 		draw_grid ed.size;
 		draw_panel ed.size;
 		Frontend.draw ed.state;
+		List.iter draw_radius_handle ed.state
 	);
 	ed
 
 let stick_to_grid pt =
 	Math2d.map (fun k -> grid_size *. round_float (k /. grid_size)) pt
 
-let intersect_entity pt ent =
-	match ent with
+let intersect_entity pt entity =
+	match entity with
 	| Ball{position} ->
 		Mlgrope.ball_radius**2. >= squared_distance position pt
 	| Goal{position} ->
@@ -85,16 +106,30 @@ let intersect_entity pt ent =
 	| Block{vertices} -> Collide.polygon_point vertices pt
 	| _ -> false
 
-let intersect_ball pt (b : ball) =
-	Mlgrope.ball_radius**2. >= squared_distance b.position pt
+let intersect_handle pt e =
+	Collide.circle_point (handle_position e) (handle_size /. 2.) pt
 
-let intersect_object pt state =
-	try
-		Some(List.find (intersect_entity pt) state)
-	with Not_found -> None
+let rec intersect_entities pt state =
+	match state with
+	| e::state -> (
+		try
+			if intersect_handle pt e then
+				Some(e, Radius)
+			else
+				raise Not_found
+		with Not_found ->
+			if intersect_entity pt e then
+				Some(e, Position)
+			else
+				intersect_entities pt state
+	)
+	| _ -> None
 
-let update_position ed entity position =
-	let updated = match entity with
+let swap_entity entity updated =
+	fun e -> if e == entity then updated else e
+
+let update_position entity position =
+	match entity with
 	| Ball(b) -> Ball{b with position}
 	| Bubble(b) -> Bubble{b with position}
 	| Rope(b) -> Rope{b with position}
@@ -106,17 +141,25 @@ let update_position ed entity position =
 		let delta = position -: center in
 		let vertices = List.map (fun v -> v +: delta) b.vertices in
 		Block{b with vertices}
-	in
-	let state = List.map (fun e ->
-		if e == entity then updated else e
-	) ed.state in
-	{ed with state; selected = Some(updated)}
+
+let update_radius entity position =
+	let radius = distance (position_of_entity entity) position in
+	if radius < grid_size then entity else
+	match entity with
+	| Bubble(b) -> Bubble{b with radius}
+	| Rope(r) -> Rope{r with radius}
+	| Elastic(e) -> Elastic{e with radius}
+	| _ -> entity
 
 let update ed entity prop position =
-	match prop with
-	| Position -> update_position ed entity position
-	(* TODO *)
-	| _ -> ed
+	let ed = {ed with selected_property = prop} in
+	let updated = match prop with
+	| Position -> update_position entity position
+	| Radius -> update_radius entity position
+	| _ -> entity
+	in
+	let state = List.map (swap_entity entity updated) ed.state in
+	{ed with state; selected = Some(updated)}
 
 let remove ed entity =
 	match entity with
@@ -134,14 +177,14 @@ let handle_event path ed s s' =
 	in
 	match (s, s') with
 	| ({button = false}, {button = true}) -> (
-		match intersect_object pos ed.state with
-		| Some(e) -> update ed e ed.selected_property pos
+		match intersect_entities pos ed.state with
+		| Some(e, prop) -> update ed e prop pos
 		| None -> (
 			let l = panel_entities ed.size in
 			try
 				let e = List.find (intersect_entity pos) l in
 				let ed = {ed with state = e::ed.state} in
-				update ed e ed.selected_property pos
+				update ed e Position pos
 			with Not_found -> ed
 		)
 	)

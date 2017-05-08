@@ -158,7 +158,7 @@ let ball_move ball gs dt =
 	let position = compute_position (ball.position +: dt *: speed) colList links in
 	let updated = {position; speed; links} in
 	let gs = clear_entities colList gs in
-	List.map (update_ball ball updated) gs
+	List.map (swap_ball ball updated) gs
 
 let move gs dt =
 	fold_balls (fun gs b -> ball_move b gs dt) gs gs
