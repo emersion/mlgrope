@@ -45,19 +45,22 @@ let clear_entities col entl =
 		) [] entl
 
 let check_collision pos ent =
+	let sqdRadius = Mlgrope.ball_radius *. Mlgrope.ball_radius in
 	match ent with
+	| Ball(b) -> let d = squared_distance b.position pos in
+		(Mlgrope.ball_radius*.2.) *. (Mlgrope.ball_radius*.2.) >= d
 	| Goal(g) -> let d = squared_distance g.position pos in
-		if Mlgrope.ball_radius**2. >= d then raise TouchedGoalException else false
+		if sqdRadius >= d then raise TouchedGoalException else false
 	| Star(s) -> let d = squared_distance s.position pos in
-		Mlgrope.ball_radius**2. >= d
+		sqdRadius >= d
 	| Bubble(bu) ->	let d = squared_distance bu.position pos in
-		(Mlgrope.ball_radius +. bu.radius)**2. >= d
+		(Mlgrope.ball_radius +. bu.radius) *. (Mlgrope.ball_radius +. bu.radius) >= d
 	| Rope(r) -> squared_distance r.position pos >= r.length**2.
 	(* | Block(b) -> *)
 	| _ -> false
 
 (* Add links that needs to be added according to collisions *)
-let rec update_links col links =
+let rec add_links_collision col links =
 	List.fold_left (fun acc e ->
 		match e with
 		| Bubble(bu) -> e::acc
@@ -65,19 +68,23 @@ let rec update_links col links =
 		) links col
 
 (* Add links tant needs to be added according to entity list *)
-let link_entities entl b =
+let add_links_entity pos entl links =
 	List.fold_left (fun acc e ->
 		match e with
-		| Rope(r) -> 	if squared_distance r.position b.position <= r.radius**2.
+		| Rope(r) -> 	if squared_distance r.position pos <= r.radius**2.
 										&& (not (List.mem e acc))
 									then e::acc
 									else acc
-		| Elastic(el) -> if squared_distance el.position b.position <= el.radius**2.
+		| Elastic(el) -> if squared_distance el.position pos <= el.radius**2.
 										&& (not (List.mem e acc))
 									then e::acc
 									else acc
 		| _ -> acc
-	)	b.links entl
+	)	links entl
+
+let add_links ball entl col =
+	let links = add_links_collision col ball.links in
+	add_links_entity ball.position entl links
 
 (* ball pos, Link list : entity list -> Forces list : position list *)
 (* Collision response *)
@@ -96,7 +103,9 @@ let compute_forces pos linkList =
 let compute_reaction pos sumForces colList linkList =
 	List.fold_left (fun acc e ->
 		match e with
-		| Rope(r) -> if List.mem e linkList && distance pos r.position >= r.length
+		| Ball(b) -> (projection (sumForces) (b.position -: pos)) +: acc
+		| Rope(r) ->
+			if List.mem e linkList && distance pos r.position >= r.length
 			then (projection (-1. *: sumForces) (r.position -: pos)) +: acc
 			else acc
 		| _ -> acc
@@ -104,10 +113,12 @@ let compute_reaction pos sumForces colList linkList =
 
 (* I need to move the ball where it can go *)
 (* pos = previous pos, newPos position it would go to without any constraint *)
-let apply_constraint b sumForces col =
+let apply_constraint b sumForces col linkList =
+	if sumForces =: {x = 0.; y = 0.} then b.speed else
 	match col with
+	| Ball(b) -> projection b.speed sumForces
 	| Rope(r) ->
-		if distance b.position r.position >= r.length
+		if distance b.position r.position >= r.length && List.mem col linkList
 		then projection b.speed sumForces
 		else b.speed
 	| _ -> b.speed
@@ -115,16 +126,15 @@ let apply_constraint b sumForces col =
 (* Apply constraints one after the other *)
 let rec apply_constraints b sumForces colList linkList =
 	match colList with
-	| h::t -> if List.mem h linkList
-		then let b = { b with speed = (apply_constraint b sumForces h) } in
-			apply_constraints b sumForces t linkList
-		else apply_constraints b sumForces t linkList
+	| h::t -> let b = { b with speed = (apply_constraint b sumForces h linkList) } in
+		apply_constraints b sumForces t linkList
 	| [] -> b.speed
 
 (* Handles collisions *)
 let compute_position pos colList linkList =
 	List.fold_left (fun acc e ->
 			match e with
+			| Ball(b) -> pos
 			| Rope(r) ->
 				if List.mem e linkList && distance pos r.position >= r.length
 				then r.length *: (direction r.position pos) +: r.position
@@ -135,20 +145,29 @@ let compute_position pos colList linkList =
 let sum_vec l =
 	List.fold_left (+:) { x = 0.; y = 0. } l
 
+let filter_self ball gs  =
+	List.filter (fun e ->
+		match e with
+		| Ball(b) -> if ball = b then false else true
+		| _ -> true
+	) gs
+
 (* Compute new pos *)
-let ball_move ball gs dt =
-	let colList = List.filter (check_collision ball.position) gs in
+let ball_move ball gs dt gs' =
+	let gsNoBall = filter_self ball gs in
+	let colList = List.filter (check_collision ball.position) gsNoBall in
 	let forceList = compute_forces ball.position ball.links in
 	let sumForces = sum_vec forceList in
-	let links = update_links colList ball.links in
-	let links = link_entities gs {ball with links} in
+	let links = add_links ball gsNoBall colList in
 	(* compute links impact on the forces / movement / position *)
 	let sumForces = compute_reaction ball.position sumForces colList links in
+		Printf.printf "sf = %f,%f\n %!" sumForces.x sumForces.y;
 	let speed = (apply_constraints ball sumForces colList links) +: dt *: sumForces in
 	let position = compute_position (ball.position +: dt *: speed) colList links in
 	let updated = {position; speed; links} in
-	let gs = clear_entities colList gs in
-	List.map (swap_ball ball updated) gs
+	let gs' = clear_entities colList gs' in
+	List.map (swap_ball ball updated) gs'
 
 let move gs dt =
-	fold_balls (fun gs b -> ball_move b gs dt) gs gs
+	Printf.printf "\n-------------------\n";
+	fold_balls (fun gs' b -> ball_move b gs dt gs') gs gs
