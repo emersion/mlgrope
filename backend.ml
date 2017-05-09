@@ -55,8 +55,8 @@ let check_collision pos ent =
 		sqdRadius >= d
 	| Bubble(bu) ->	let d = squared_distance bu.position pos in
 		(Mlgrope.ball_radius +. bu.radius) *. (Mlgrope.ball_radius +. bu.radius) >= d
-	| Rope(r) -> squared_distance r.position pos >= r.length**2.
-	(* | Block(b) -> *)
+	| Rope(r) -> squared_distance r.position pos >= r.length *. r.length
+	| Block(b) -> List.length (Collide.polygon_circle b.vertices pos Mlgrope.ball_radius) >= 10 (* TODO *)
 	| _ -> false
 
 (* Add links that needs to be added according to collisions *)
@@ -91,7 +91,7 @@ let add_links ball entl col =
 let compute_forces pos linkList =
 	let (linkList,isBubble) = List.fold_left (fun acc e ->
 		match e with
-		| Bubble(bu) -> ({gravity with y = 0.5*. abs_float gravity.y}::(fst acc), true)
+		| Bubble(bu) -> ({gravity with y = 0.5 *. abs_float gravity.y}::(fst acc), true)
 		| Elastic(e) -> let d = distance pos e.position in
 			if d >= e.length
 			then ((elastic_force d e) *: direction pos e.position ::(fst acc), snd acc)
@@ -103,25 +103,41 @@ let compute_forces pos linkList =
 let compute_reaction pos sumForces colList linkList =
 	List.fold_left (fun acc e ->
 		match e with
-		| Ball(b) -> (projection (sumForces) (b.position -: pos)) +: acc
+		| Ball(b) -> (projection sumForces (b.position -: pos)) +: acc
 		| Rope(r) ->
 			if List.mem e linkList && distance pos r.position >= r.length
 			then (projection (-1. *: sumForces) (r.position -: pos)) +: acc
 			else acc
+		| Block(b) -> let l = Collide.polygon_circle b.vertices pos Mlgrope.ball_radius in
+			Printf.printf "%d \n" (List.length l);
+			List.fold_left (fun acc (a,b) ->
+				(projection (-1. *: sumForces) (b -: a -: pos)) +: acc
+			) sumForces l
 		| _ -> acc
 	) sumForces colList
 
 (* I need to move the ball where it can go *)
 (* pos = previous pos, newPos position it would go to without any constraint *)
-let apply_constraint b sumForces col linkList =
-	if sumForces =: {x = 0.; y = 0.} then b.speed else
+let apply_constraint ball sumForces col linkList =
+	if sumForces =: Math2d.vec0 then ball.speed else
 	match col with
-	| Ball(b) -> projection b.speed sumForces
+	| Ball(b) -> projection ball.speed sumForces
 	| Rope(r) ->
-		if distance b.position r.position >= r.length && List.mem col linkList
-		then projection b.speed sumForces
-		else b.speed
-	| _ -> b.speed
+		if List.mem col linkList && distance ball.position r.position >= r.length
+		then projection ball.speed sumForces
+		else ball.speed
+	| Block(bl) ->
+		let l = Collide.polygon_circle bl.vertices ball.position Mlgrope.ball_radius in
+		List.fold_left (fun acc (a,b) ->
+			let vi = Collide.circle_seg_inter a b ball.position in
+			let n  = Collide.circle_seg_norm a b ball.position in
+			let reflect = Math2d.reflect vi n in
+			Printf.printf "vi : %f, %f \n%!" vi.x vi .y;
+			Printf.printf "n : %f, %f \n%!" n.x n .y;
+			Printf.printf "reflect : %f, %f \n\n%!" reflect.x reflect.y;
+			Math2d.reflect vi n
+		) sumForces l
+	| _ -> ball.speed
 
 (* Apply constraints one after the other *)
 let rec apply_constraints b sumForces colList linkList =
@@ -148,7 +164,7 @@ let sum_vec l =
 let filter_self ball gs  =
 	List.filter (fun e ->
 		match e with
-		| Ball(b) -> if ball = b then false else true
+		| Ball(b) -> not (ball = b)
 		| _ -> true
 	) gs
 

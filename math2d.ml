@@ -39,11 +39,17 @@ let ( *:) s v  =
 let dot v1 v2  =
 	v1.x *. v2.x +. v1.y *. v2.y
 
+let squared_length v =
+	v.x**2. +. v.y**2.
+
 let length v =
-	sqrt (v.x**2. +. v.y**2.)
+	sqrt (squared_length v)
 
 let normalize v =
 	{x = v.x /. (length v); y  = v.y /. (length v)}
+
+let reflect vi normal =
+	vi -: (2. *. (dot vi normal) *: normal)
 
 let fold_segments f acc l =
 	match l with
