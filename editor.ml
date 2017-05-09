@@ -29,6 +29,20 @@ type editor = {
 	selected_property : entity_property;
 }
 
+let update_position entity position =
+	match entity with
+	| Ball(b) -> Ball{b with position}
+	| Bubble(b) -> Bubble{b with position}
+	| Rope(b) -> Rope{b with position}
+	| Elastic(b) -> Elastic{b with position}
+	| Goal(b) -> Goal{position}
+	| Star(b) -> Star{position}
+	| Block(b) ->
+		let center = average b.vertices in
+		let delta = position -: center in
+		let vertices = List.map (fun v -> v +: delta) b.vertices in
+		Block{b with vertices}
+
 let draw_grid size =
 	let grid_size = int_of_float grid_size in
 	let (w, h) = ints_of_vec size in
@@ -43,18 +57,22 @@ let draw_grid size =
 	done
 
 let panel_entities size =
-	let n = 5 in
-	let x = size.x +. (panel_width /. 2.) in
-	let h = round_float (size.y /. (float_of_int (n+1))) in
+	let position = {x = size.x +. (panel_width /. 2.); y = 0.} in
 	let radius = 20. in
-	[
-		Bubble{position = {x; y = h}; radius};
-		Rope{position = {x; y = 2.*.h}; radius; length = radius};
-		Elastic{position = {x; y = 3.*.h}; radius; length = radius; stiffness = 1.};
-		Goal{position = {x; y = 4.*.h}};
-		Star{position = {x; y = 5.*.h}};
+	let l = [
+		Ball{position; speed = vec0; links = []};
+		Bubble{position; radius};
+		Rope{position; radius; length = radius};
+		Elastic{position; radius; length = radius; stiffness = 1.};
+		Goal{position};
+		Star{position};
 		(* TODO: block *)
-	]
+	] in
+	let n = List.length l in
+	let h = round_float (size.y /. (float_of_int (n+1))) in
+	List.mapi (fun i e ->
+		update_position e {position with y = (float_of_int (i+1)) *. h}
+	) l
 
 let draw_panel size =
 	let (w, h) = ints_of_vec size in
@@ -127,20 +145,6 @@ let rec intersect_entities pt state =
 
 let swap_entity entity updated =
 	fun e -> if e == entity then updated else e
-
-let update_position entity position =
-	match entity with
-	| Ball(b) -> Ball{b with position}
-	| Bubble(b) -> Bubble{b with position}
-	| Rope(b) -> Rope{b with position}
-	| Elastic(b) -> Elastic{b with position}
-	| Goal(b) -> Goal{position}
-	| Star(b) -> Star{position}
-	| Block(b) ->
-		let center = average b.vertices in
-		let delta = position -: center in
-		let vertices = List.map (fun v -> v +: delta) b.vertices in
-		Block{b with vertices}
 
 let update_radius entity position =
 	let radius = distance (position_of_entity entity) position in
