@@ -20,25 +20,14 @@ let projection v1 v2 =
 	let a = { x = v2.x /. (Math2d.length v2); y = v2.y /. (Math2d.length v2) } in
 	((Math2d.length v1) *. co) *: a
 
-let collision_cercle_point center radius p =
-	squared_distance center p <= radius ** 2.
-
-let collision_cercle_droite center radius p1 p2=
-	let u = p2 -: p1 in
-	let ac = center -: p1 in
-	let d = (length ({x = u.x *. ac.y -. u.y *. ac.x; y = 0.})) /. (length u) in
-	radius <= d
-
-let collision_cercle_seg center radius p1 p2 =
-	collision_cercle_droite center radius p1 p2
-	&& ( dot (p2 -: p1) (center -: p1) >= 0. && dot (p1 -: p2) (center -: p2) >= 0.
-			|| collision_cercle_point center radius p1
-			|| collision_cercle_point center radius p2
-			)
-
-
 let elastic_force d (e : elastic) =
 	(d/.250. *. e.stiffness)**2.0
+
+let remove_from_list o l = List.filter (fun e -> o != e) l
+
+let find_bubble l = List.exists (fun e -> match e with | Bubble(_) -> true	| _ -> false) l
+
+let find_rope l = List.exists (fun e -> match e with | Rope(_) -> true	| _ -> false) l
 
 let fold_balls f acc l =
 	List.fold_left (fun acc e ->
@@ -143,13 +132,14 @@ let compute_position pos colList linkList =
 			| _ -> pos
 	) pos colList
 
-let sum_force l =
-	List.fold_left (+:) vec0 l
+let sum_vec l =
+	List.fold_left (+:) { x = 0.; y = 0. } l
 
+(* Compute new pos *)
 let ball_move ball gs dt =
 	let colList = List.filter (check_collision ball.position) gs in
 	let forceList = compute_forces ball.position ball.links in
-	let sumForces = sum_force forceList in
+	let sumForces = sum_vec forceList in
 	let links = update_links colList ball.links in
 	let links = link_entities gs {ball with links} in
 	(* compute links impact on the forces / movement / position *)

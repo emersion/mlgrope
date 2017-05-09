@@ -54,3 +54,16 @@ let polygon_point l pos =
 
 let circle_point center radius pos =
 	radius *. radius >= squared_distance center pos
+
+let circle_line center radius p1 p2 =
+	let u = p2 -: p1 in
+	let ac = center -: p1 in
+	let d = (Math2d.length ({x = u.x *. ac.y -. u.y *. ac.x; y = 0.})) /. (Math2d.length u) in
+	radius <= d
+
+let cercle_seg center radius p1 p2 =
+	circle_line center radius p1 p2
+	&& ( Math2d.dot (p2 -: p1) (center -: p1) >= 0. && Math2d.dot (p1 -: p2) (center -: p2) >= 0.
+			|| circle_point center radius p1
+			|| circle_point center radius p2
+			)
