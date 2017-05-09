@@ -103,8 +103,7 @@ let compute_reaction pos sumForces colList linkList =
 			else acc
 		| Block(b) -> let l = Collide.polygon_circle b.vertices pos Mlgrope.ball_radius in
 			List.fold_left (fun acc (a,b) ->
-			let speed = (projection (sumForces) (b -: a -: pos)) in
-				(projection (-1.*:sumForces) (b -: a)) +: acc
+				(projection (sumForces) (b -: a)) +: acc
 			) sumForces l
 		| _ -> acc
 	) sumForces colList
@@ -122,10 +121,8 @@ let apply_constraint ball sumForces col linkList =
 	| Block(bl) ->
 		let l = Collide.polygon_circle bl.vertices ball.position Mlgrope.ball_radius in
 		List.fold_left (fun acc (a,b) ->
-			let vi = ball.speed in
 			let n  = Collide.circle_seg_norm a b ball.position in
-			let reflect = Math2d.reflect vi n in
-			Math2d.reflect vi n
+			Math2d.reflect ball.speed n
 		) sumForces l
 	| _ -> ball.speed
 
@@ -145,6 +142,11 @@ let compute_position pos colList linkList =
 				if List.mem e linkList && distance pos r.position >= r.length
 				then r.length *: (direction r.position pos) +: r.position
 				else pos
+			| Block(bl) -> let l = Collide.polygon_circle bl.vertices pos Mlgrope.ball_radius in
+				List.fold_left (fun acc (a,b) ->
+					let n  = Collide.circle_seg_norm a b pos in
+					acc +: (Mlgrope.ball_radius *: n)
+				) pos l
 			| _ -> pos
 	) pos colList
 

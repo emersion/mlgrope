@@ -68,8 +68,7 @@ let circle_segment center radius a b =
 let circle_seg_inter a b center =
 	let u = b -: a in
 	let ac = center -: a in
-	let i = a +: (((dot u ac) /. squared_length u) *: u) in
-	i
+	a +: (((dot u ac) /. squared_length u) *: u)
 
 let circle_seg_norm a b center =
 	let u = b -: a in
