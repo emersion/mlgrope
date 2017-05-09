@@ -161,7 +161,6 @@ let ball_move ball gs dt gs' =
 	let links = add_links ball gsNoBall colList in
 	(* compute links impact on the forces / movement / position *)
 	let sumForces = compute_reaction ball.position sumForces colList links in
-		Printf.printf "sf = %f,%f\n %!" sumForces.x sumForces.y;
 	let speed = (apply_constraints ball sumForces colList links) +: dt *: sumForces in
 	let position = compute_position (ball.position +: dt *: speed) colList links in
 	let updated = {position; speed; links} in
@@ -169,5 +168,4 @@ let ball_move ball gs dt gs' =
 	List.map (swap_ball ball updated) gs'
 
 let move gs dt =
-	Printf.printf "\n-------------------\n";
 	fold_balls (fun gs' b -> ball_move b gs dt gs') gs gs
