@@ -53,3 +53,4 @@ val ball_radius : float
 
 val position_of_entity : entity -> vec
 val swap_ball : ball -> ball -> (entity -> entity)
+val fold_balls : ('a -> ball -> 'a) -> 'a -> entity list -> 'a

@@ -29,13 +29,6 @@ let find_bubble l = List.exists (fun e -> match e with | Bubble(_) -> true	| _ -
 
 let find_rope l = List.exists (fun e -> match e with | Rope(_) -> true	| _ -> false) l
 
-let fold_balls f acc l =
-	List.fold_left (fun acc e ->
-		match e with
-		| Ball(b) -> f acc b
-		| _ -> acc
-	) acc l
-
 (* Col = colision list, entl = entities *)
 let clear_entities col entl =
 	List.fold_left (fun acc e ->
@@ -63,9 +56,9 @@ let check_collision pos ent =
 let rec add_links_collision col links =
 	List.fold_left (fun acc e ->
 		match e with
-		| Bubble(bu) -> e::acc
+		| Bubble(_) | Star(_) -> e::acc
 		| _ -> acc
-		) links col
+	) links col
 
 (* Add links tant needs to be added according to entity list *)
 let add_links_entity pos entl links =
