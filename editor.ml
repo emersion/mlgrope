@@ -166,11 +166,8 @@ let update ed entity prop position =
 	{ed with state; selected = Some(updated)}
 
 let remove ed entity =
-	match entity with
-	| Ball(_) -> ed
-	| _ ->
-		let state = List.filter (fun e -> e != entity) ed.state in
-		{ed with state; selected = None}
+	let state = List.filter (fun e -> e != entity) ed.state in
+	{ed with state; selected = None}
 
 let handle_event path ed s s' =
 	let pos = Frontend.vec_of_status s' in
