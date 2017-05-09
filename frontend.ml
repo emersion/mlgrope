@@ -95,15 +95,12 @@ let create_rope_line a b l =
 	let (a, b) = if a.x < b.x then (a, b) else (b, a) in
 	let (x1, y1) = (a.x, a.y) in
 	let (x2, y2) = (b.x, b.y) in
-	let c1 = (y2 -. y1) /. l in
-	let c2 = copysign (sqrt ((c1**2.) /. (1. -. c1**2.))) c1 in
-	let f a = y2 -. y1 -. 2. *. a *. c2 *. (sinh ((x2 -. x1) /. (2. *. a))) in
-	(* Printf.printf "%f %f %f %f %f\n%!" x1 y1 x2 y2 (f (-10.)); *)
-	let a = find_zero f ((x2 -. x1) /. 2.) in
-	let h x0 = y2 -. y1 -. a *. ((cosh ((x2 -. x0) /. a)) -. (cosh ((x1 -. x0) /. a))) in
-	let x0 = find_zero h 0. in
-	let y0 = y1 -. a *. (cosh ((x1 -. x0) /. a)) +. a in
-	let y x = a *. (cosh ((x -. x0) /. a)) +. (y0 -. a) in
+	let f z = ((sqrt (l**2. -. (y2 -. y1)**2.)) /. (x2 -. x1)) -. (sinh z) /. z in
+	let z = find_zero f 1. in
+	let a = (x2 -. x1) /. 2. /. z in
+	let p = (x1 +. x2 -. a *. (log ((l +. y2 -. y1) /. (l -. y2 +. y1)))) /. 2. in
+	let q = (y2 +. y1 -. l *. (cosh z) /. (sinh z)) /. 2. in
+	let y x = a *. (cosh ((x -. p) /. a)) +. q in
 	fun t -> let x = mix x1 x2 t in {x; y = y x}
 
 let draw_link b l =
