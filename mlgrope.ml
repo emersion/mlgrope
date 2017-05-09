@@ -63,3 +63,10 @@ let swap_ball ball updated =
 		match e with
 		| Ball(b) -> if b == ball then Ball(updated) else e
 		| _ -> e
+
+let fold_balls f acc l =
+	List.fold_left (fun acc e ->
+		match e with
+		| Ball(b) -> f acc b
+		| _ -> acc
+	) acc l

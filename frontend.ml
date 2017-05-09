@@ -146,6 +146,7 @@ let run step handle_event size g =
 	Graphics.open_graph (" "^(string_of_int w)^"x"^(string_of_int h));
 	Graphics.auto_synchronize false;
 	Graphics.set_window_title "Mlgrope";
+	Graphics.set_font "-*-dejavu sans mono-medium-r-normal--*-*-*-*-*-*-*-1";
 
 	let g = ref (step g) in
 	let s = ref {mouse_x = 0; mouse_y = 0; button = false; keypressed = false; key = '\000'} in

@@ -16,6 +16,26 @@ type game = {
 	state : game_state;
 }
 
+let star_score = 100
+
+let pad_int padding n =
+	let s = string_of_int n in
+	let len = String.length s in
+	let start_at = padding - len in
+	if start_at < 0 then s else
+	String.init padding (fun i ->
+		if i >= start_at then String.get s (i - start_at) else '0'
+	)
+
+let draw_score size score =
+	let (x, y) = ints_of_vec size in
+	let s = pad_int 5 score in
+	Graphics.set_text_size 30;
+	Graphics.set_color Graphics.black;
+	let (w, h) = Graphics.text_size s in
+	Graphics.moveto (x - w) (y - h);
+	Graphics.draw_string s
+
 let is_bubble_at pos ball e =
 	match e with
 	| Bubble(bubble) -> distance pos ball.position <= bubble.radius
@@ -38,6 +58,15 @@ let is_in_bounds size b =
 	if has_rope then true else
 	Collide.box_point vec0 size b.position
 
+let compute_score gs =
+	fold_balls (fun score ball ->
+		List.fold_left (fun score e ->
+			match e with
+			| Star(_) -> score + star_score
+			| _ -> score
+		) 0 ball.links
+	) 0 gs
+
 let step g =
 	let t = Unix.gettimeofday () in
 	let dt = t -. g.time in
@@ -53,7 +82,11 @@ let step g =
 	) ([], 0) state in
 	if in_bounds = 0 then raise OutOfBoundsException else
 	let g = {g with time = t; state} in
-	Frontend.step (fun () -> Frontend.draw g.state);
+	let score = compute_score g.state in
+	Frontend.step (fun () ->
+		Frontend.draw g.state;
+		draw_score g.size score
+	);
 	g
 
 let handle_click ball lastpos pos =
