@@ -30,7 +30,6 @@ let pad_int padding n =
 let draw_score size score =
 	let (x, y) = ints_of_vec size in
 	let s = pad_int 5 score in
-	Graphics.set_text_size 30;
 	Graphics.set_color Graphics.black;
 	let (w, h) = Graphics.text_size s in
 	Graphics.moveto (x - w) (y - h);
