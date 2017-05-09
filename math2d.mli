@@ -18,7 +18,9 @@ val (+:) : vec -> vec -> vec
 val (-:) : vec -> vec -> vec
 val ( *:) : float -> vec -> vec
 val dot : vec -> vec -> float
+val squared_length : vec -> float
 val length : vec -> float
 val normalize : vec -> vec
+val reflect : vec -> vec -> vec
 val fold_segments : ('a -> (vec * vec) -> 'a) -> 'a -> vec list -> 'a
 val average : vec list -> vec

@@ -46,6 +46,37 @@ let segments a b a' b' =
 		if box_point a b pt && box_point a' b' pt then Some(pt) else None
 	| None -> None
 
+let circle_point center radius pos =
+	radius *. radius >= squared_distance center pos
+
+let circle_line center radius a b =
+	let u = b -: a in
+	let ac = center -: a in
+	let d = (Math2d.length {x = u.x *. ac.y -. u.y *. ac.x; y = 0.}) /. (Math2d.length u) in
+	if radius <= d then Some(a) else None
+
+let circle_segment center radius a b =
+	match circle_line center radius a b with
+	| Some(pt) ->
+		if Math2d.dot (b -: a) (center -: a) >= 0.
+			&& Math2d.dot (a -: b) (center -: b) >= 0.
+			|| circle_point center radius a
+			|| circle_point center radius b
+		then Some(pt) else None
+	| None -> None
+
+let circle_seg_inter a b center =
+	let u = b -: a in
+	let ac = center -: a in
+	let i = a +: ((dot u ac) /. squared_length u) *: u in
+	i
+
+let circle_seg_norm a b center =
+	let u = b -: a in
+	let ac = center -: a in
+	let n = {x = -.u.y *. (u.x*.ac.y -. u.y*.ac.x); y = u.x *. (u.x*.ac.y -. u.y*.ac.x)} in
+	normalize n
+
 (* Ray casting algorithm *)
 let polygon_point l pos =
 	let (a, b) = (pos, {pos with x = infinity}) in
@@ -60,21 +91,9 @@ let polygon_line l a b =
 let polygon_segment l a b =
 	None (* TODO *)
 
-let circle_point center radius pos =
-	radius *. radius >= squared_distance center pos
-
-let circle_line center radius a b =
-	let u = b -: a in
-	let ac = center -: a in
-	let d = (Math2d.length {x = u.x *. ac.y -. u.y *. ac.x; y = 0.}) /. (Math2d.length u) in
-	if radius <= d then Some(a) else None (* TODO *)
-
-let circle_segment center radius a b =
-	match circle_line center radius a b with
-	| Some(pt) ->
-		if Math2d.dot (b -: a) (center -: a) >= 0.
-			&& Math2d.dot (a -: b) (center -: b) >= 0.
-			|| circle_point center radius a
-			|| circle_point center radius b
-		then Some(pt) else None
-	| None -> None
+let polygon_circle l center radius =
+	fold_segments (fun acc (a, b) ->
+		if is_some (circle_segment center radius a b)
+		then (a, b)::acc
+		else acc
+	) [] l
