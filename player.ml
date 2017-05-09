@@ -27,30 +27,32 @@ let is_rope_at lastpos pos ball e =
 		is_some (Collide.segments rope.position ball.position lastpos pos)
 	| _ -> false
 
-let check_ball_bounds size b =
+let is_in_bounds size b =
 	let (has_bubble, has_rope) = List.fold_left (fun (has_bubble, has_rope) e ->
 		match e with
 		| Bubble(_) -> (true, has_rope)
 		| Rope(_) | Elastic(_) -> (has_bubble, true)
 		| _ -> (has_bubble, has_rope)
 	) (false, false) b.links in
-	if has_bubble && b.position.y <= 0. then () else
-	if has_rope then () else
-	if not (Collide.box_point vec0 size b.position)
-	then raise OutOfBoundsException
+	if has_bubble && b.position.y <= 0. then true else
+	if has_rope then true else
+	Collide.box_point vec0 size b.position
 
 let step g =
 	let t = Unix.gettimeofday () in
 	let dt = t -. g.time in
-	let g = { g with
-		time = t;
-		state = if g.paused then g.state else Backend.move g.state dt
-	} in
-	List.iter (fun e ->
+	let state = if g.paused then g.state else Backend.move g.state dt in
+	let (state, in_bounds) = List.fold_left (fun (l, n) e ->
 		match e with
-		| Ball(b) -> check_ball_bounds g.size b
-		| _ -> ()
-	) g.state;
+		| Ball(b) ->
+			if is_in_bounds g.size b then
+				(e::l, n+1)
+			else
+				(l, n)
+		| _ -> (e::l, n)
+	) ([], 0) state in
+	if in_bounds = 0 then raise OutOfBoundsException else
+	let g = {g with time = t; state} in
 	Frontend.step (fun () -> Frontend.draw g.state);
 	g
 
