@@ -1,3 +1,4 @@
+open Util
 open Math2d
 
 let box_point a b pos =
@@ -41,29 +42,39 @@ let segment_point a b pos =
 
 let segments a b a' b' =
 	match lines a b a' b' with
-	| Some(pt) -> box_point a b pt && box_point a' b' pt
-	| None -> false
+	| Some(pt) ->
+		if box_point a b pt && box_point a' b' pt then Some(pt) else None
+	| None -> None
 
 (* Ray casting algorithm *)
 let polygon_point l pos =
 	let (a, b) = (pos, {pos with x = infinity}) in
 	let n = fold_segments (fun n (a', b') ->
-		if segments a b a' b' then n+1 else n
+		if is_some (segments a b a' b') then n+1 else n
 	) 0 l in
 	n mod 2 = 1
+
+let polygon_line l a b =
+	None (* TODO *)
+
+let polygon_segment l a b =
+	None (* TODO *)
 
 let circle_point center radius pos =
 	radius *. radius >= squared_distance center pos
 
-let circle_line center radius p1 p2 =
-	let u = p2 -: p1 in
-	let ac = center -: p1 in
-	let d = (Math2d.length ({x = u.x *. ac.y -. u.y *. ac.x; y = 0.})) /. (Math2d.length u) in
-	radius <= d
+let circle_line center radius a b =
+	let u = b -: a in
+	let ac = center -: a in
+	let d = (Math2d.length {x = u.x *. ac.y -. u.y *. ac.x; y = 0.}) /. (Math2d.length u) in
+	if radius <= d then Some(a) else None (* TODO *)
 
-let cercle_seg center radius p1 p2 =
-	circle_line center radius p1 p2
-	&& ( Math2d.dot (p2 -: p1) (center -: p1) >= 0. && Math2d.dot (p1 -: p2) (center -: p2) >= 0.
-			|| circle_point center radius p1
-			|| circle_point center radius p2
-			)
+let circle_segment center radius a b =
+	match circle_line center radius a b with
+	| Some(pt) ->
+		if Math2d.dot (b -: a) (center -: a) >= 0.
+			&& Math2d.dot (a -: b) (center -: b) >= 0.
+			|| circle_point center radius a
+			|| circle_point center radius b
+		then Some(pt) else None
+	| None -> None

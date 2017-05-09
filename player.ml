@@ -1,5 +1,6 @@
 open Graphics
 
+open Util
 open Math2d
 open Collide
 open Mlgrope
@@ -12,7 +13,7 @@ type game = {
 	size : vec;
 	time : float;
 	paused : bool;
-	state : Mlgrope.game_state;
+	state : game_state;
 }
 
 let is_bubble_at pos ball e =
@@ -22,7 +23,8 @@ let is_bubble_at pos ball e =
 
 let is_rope_at lastpos pos ball e =
 	match e with
-	| Rope(rope) -> Collide.segments rope.position ball.position lastpos pos
+	| Rope(rope) ->
+		is_some (Collide.segments rope.position ball.position lastpos pos)
 	| _ -> false
 
 let check_ball_bounds size b =
