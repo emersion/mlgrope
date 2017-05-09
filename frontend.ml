@@ -91,6 +91,7 @@ let build_poly_line f =
 let create_line a b =
 	fun t -> mix_vec a b t
 
+(* See https://codegolf.stackexchange.com/a/37710 *)
 let create_rope_line a b l =
 	let (a, b) = if a.x < b.x then (a, b) else (b, a) in
 	let (x1, y1) = (a.x, a.y) in
