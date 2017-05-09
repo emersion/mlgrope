@@ -52,8 +52,8 @@ let circle_point center radius pos =
 let circle_line center radius a b =
 	let u = b -: a in
 	let ac = center -: a in
-	let d = (Math2d.length {x = u.x *. ac.y -. u.y *. ac.x; y = 0.}) /. (Math2d.length u) in
-	if radius <= d then Some(a) else None
+	let d = (Math2d.length {x = abs_float (u.x *. ac.y -. u.y *. ac.x); y = 0.}) /. (Math2d.length u) in
+	if d <= radius then Some(a) else None
 
 let circle_segment center radius a b =
 	match circle_line center radius a b with
@@ -68,7 +68,7 @@ let circle_segment center radius a b =
 let circle_seg_inter a b center =
 	let u = b -: a in
 	let ac = center -: a in
-	let i = a +: ((dot u ac) /. squared_length u) *: u in
+	let i = a +: (((dot u ac) /. squared_length u) *: u) in
 	i
 
 let circle_seg_norm a b center =

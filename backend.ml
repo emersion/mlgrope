@@ -49,7 +49,7 @@ let check_collision pos ent =
 	| Bubble(bu) ->	let d = squared_distance bu.position pos in
 		(Mlgrope.ball_radius +. bu.radius) *. (Mlgrope.ball_radius +. bu.radius) >= d
 	| Rope(r) -> squared_distance r.position pos >= r.length *. r.length
-	| Block(b) -> List.length (Collide.polygon_circle b.vertices pos Mlgrope.ball_radius) >= 10 (* TODO *)
+	| Block(b) -> List.length (Collide.polygon_circle b.vertices pos Mlgrope.ball_radius) >= 1 (* TODO *)
 	| _ -> false
 
 (* Add links that needs to be added according to collisions *)
@@ -102,9 +102,9 @@ let compute_reaction pos sumForces colList linkList =
 			then (projection (-1. *: sumForces) (r.position -: pos)) +: acc
 			else acc
 		| Block(b) -> let l = Collide.polygon_circle b.vertices pos Mlgrope.ball_radius in
-			Printf.printf "%d \n" (List.length l);
 			List.fold_left (fun acc (a,b) ->
-				(projection (-1. *: sumForces) (b -: a -: pos)) +: acc
+			let speed = (projection (sumForces) (b -: a -: pos)) in
+				(projection (-1.*:sumForces) (b -: a)) +: acc
 			) sumForces l
 		| _ -> acc
 	) sumForces colList
@@ -122,12 +122,9 @@ let apply_constraint ball sumForces col linkList =
 	| Block(bl) ->
 		let l = Collide.polygon_circle bl.vertices ball.position Mlgrope.ball_radius in
 		List.fold_left (fun acc (a,b) ->
-			let vi = Collide.circle_seg_inter a b ball.position in
+			let vi = ball.speed in
 			let n  = Collide.circle_seg_norm a b ball.position in
 			let reflect = Math2d.reflect vi n in
-			Printf.printf "vi : %f, %f \n%!" vi.x vi .y;
-			Printf.printf "n : %f, %f \n%!" n.x n .y;
-			Printf.printf "reflect : %f, %f \n\n%!" reflect.x reflect.y;
 			Math2d.reflect vi n
 		) sumForces l
 	| _ -> ball.speed
