@@ -112,6 +112,9 @@ let handle_event g s s' =
 		{g with state}
 	| {keypressed = true; key = '\027'} -> raise Exit
 	| {keypressed = true; key = 'p'} -> {g with paused = not g.paused}
+	| {keypressed = true; key = 'f'} ->
+		let g = step {g with paused = false} in
+		{g with paused = true}
 	| _ -> g
 
 let run size state =
