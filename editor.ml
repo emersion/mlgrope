@@ -119,7 +119,8 @@ let intersect_entity pt entity =
 		let (a, b) = ends_of_box position goal_size in
 		Collide.box_point a b pt
 	| Star{position} ->
-		Frontend.star_radius**2. >= squared_distance position pt
+		let (a, b) = ends_of_box position star_size in
+		Collide.box_point a b pt
 	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
 		radius**2. >= squared_distance position pt
 	| Block{vertices} -> Collide.polygon_point vertices pt

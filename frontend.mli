@@ -4,7 +4,7 @@ open Math2d
 open Mlgrope
 
 val goal_size : vec
-val star_radius : float
+val star_size : vec
 
 val mouse_of_status : status -> vec
 
