@@ -33,6 +33,13 @@ type block = {
 	color : Graphics.color;
 }
 
+type spike = {
+	position : vec;
+	angle : float;
+}
+
+val spike_edge_size : float
+
 type fan = {
 	position : vec;
 	size : vec;
@@ -54,6 +61,7 @@ and entity =
 	| Star of star
 	| Block of block
 	| Fan of fan
+	| Spike of spike
 
 type game_state = entity list
 

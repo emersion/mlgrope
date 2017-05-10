@@ -2,6 +2,7 @@ open Math2d
 open Mlgrope
 
 exception TouchedGoalException
+exception DestroyBallException
 
 let print_forces l =
 	List.iter (fun v -> Printf.printf "%f %f #\n%!" v.x v.y) l
@@ -19,6 +20,15 @@ let projection v1 v2 =
 	let co = (dot v1 v2) /. ((Math2d.length v1) *. (Math2d.length v2)) in
 	let a = { x = v2.x /. (Math2d.length v2); y = v2.y /. (Math2d.length v2) } in
 	((Math2d.length v1) *. co) *: a
+
+let spike_vertices (s : spike) =
+	let v = s.position in
+	let agl = s.angle in
+	let s3 = sqrt 3. in
+	let radius = Mlgrope.spike_edge_size *. s3 /. 4. in
+	[v+: {x =  radius *. cos agl; y = radius *. sin agl};
+	 v+: {x =  radius *. cos (agl +. 2.*.Util.pi /. 3.); y = radius *. sin (agl +. 2.*.Util.pi /. 3.)};
+	 v+: {x =  radius *. cos (agl +. 4.*.Util.pi /. 3.); y = radius *. sin (agl +. 4.*.Util.pi /. 3.)}]
 
 let elastic_force d (e : elastic) =
 	(d/.250. *. e.stiffness)**2.0
@@ -49,8 +59,11 @@ let check_collision pos ent =
 		(Mlgrope.ball_radius +. bu.radius) *. (Mlgrope.ball_radius +. bu.radius) >= d
 	| Rope(r) -> squared_distance r.position pos >= r.length *. r.length
 	| Block(b) -> List.length (Collide.polygon_circle b.vertices pos Mlgrope.ball_radius) >= 1
-	(* | Fan(f) ->	Collide.box_point {x = 0.; y = f.size.y} {x = f.size.x; y  = 0.}
-																{x = pos.x *. (cos f.angle); y = pos.y *. (sin f.angle)} *)
+	(* | Fan(f) ->	 Kills you if you get in it or not ? *)
+	| Spike(s) -> let vertices = spike_vertices s in
+		if List.length (Collide.polygon_circle vertices pos Mlgrope.ball_radius) >= 1
+		then raise DestroyBallException
+		else false
 	| _ -> false
 
 (* Add links that needs to be added according to collisions *)
@@ -75,10 +88,10 @@ let add_links_entity pos entl links =
 			else acc
 		| Fan(f) ->
 			let p = pos in
-			if Collide.box_point ( f.position +: {x = 0.; y = f.size.y} )
-													  (f.position +: {x = f.size.x; y  = 0.})
+			if Collide.box_point (f.position +: {x = 0.; y = f.size.y /. 2.})
+													 (f.position +: {x = f.size.x; y  = 0.})
 													 {x = p.x *. (cos f.angle) +. p.y *. (sin f.angle);
-													  y = -.p.x *. (sin f.angle) +. p.y *. (cos f.angle) }
+													  y = -1. *. p.x *. (sin f.angle) +. p.y *. (cos f.angle) }
 			then e::acc
 			else acc
 		| _ -> acc
@@ -98,7 +111,7 @@ let compute_forces pos linkList =
 			if d >= e.length
 			then ((elastic_force d e) *: direction pos e.position ::(fst acc), snd acc)
 			else acc
-		| Fan(f) ->((100.) *: {x = cos f.angle; y = sin f.angle}::(fst acc), snd acc) (*TODO fix force = 0. *)
+		| Fan(f) ->((100.) *: {x = cos f.angle; y = sin f.angle}::(fst acc), snd acc) (* TODO fix force = 0. *)
 		| _ -> acc
 		) ([],false) linkList in
 	if isBubble then linkList else gravity::linkList
@@ -185,4 +198,7 @@ let ball_move ball gs dt gs' =
 	List.map (swap_ball ball updated) gs'
 
 let move gs dt =
-	fold_balls (fun gs' b -> ball_move b gs dt gs') gs gs
+	fold_balls (fun gs' b ->
+		try ball_move b gs dt gs'
+		with DestroyBallException -> filter_self b gs'
+	) gs gs
