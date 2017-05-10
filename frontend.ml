@@ -23,6 +23,17 @@ let mix a b t =
 let mix_vec v1 v2 t =
 	{ x = mix v1.x v2.x t; y = mix v1.y v2.y t }
 
+let mix_int i1 i2 t =
+	int_of_float (mix (float_of_int i1) (float_of_int i2) t)
+
+let rgb_of_color c =
+	((c lsr 16) land 0xFF, (c lsr 8) land 0xFF, c land 0xFF)
+
+let mix_color c1 c2 t =
+	let (r1, g1, b1) = rgb_of_color c1 in
+	let (r2, g2, b2) = rgb_of_color c2 in
+	Graphics.rgb (mix_int r1 r2 t) (mix_int g1 g2 t) (mix_int b1 b2 t)
+
 let mouse_of_status s =
 	{x = float_of_int s.mouse_x; y = float_of_int s.mouse_y}
 
@@ -77,15 +88,29 @@ let draw_block (b : block) =
 	Graphics.set_color b.color;
 	Graphics.fill_poly (Array.of_list l)
 
+let rainbow_colors = Array.of_list [Graphics.magenta; Graphics.blue; Graphics.cyan; Graphics.green; Graphics.yellow; Graphics.red]
+
+let rainbow t =
+	let n = Array.length rainbow_colors in
+	let a = t *. (float_of_int n) in
+	let i = int_of_float a in
+	let j = (i+1) mod n in
+	mix_color rainbow_colors.(j) rainbow_colors.(i) (a -. (float_of_int i))
+
 let draw_fan (f : fan) =
 	let a = f.position -: {x = 0.; y = f.size.y /. 2.} in
 	let (x, y) = ints_of_vec a in
 	let (w, h) = ints_of_vec f.size in
-	Graphics.set_color fan_color;
-	Graphics.fill_rect x y w h;
+	(* Graphics.set_color fan_color;
+	Graphics.fill_rect x y w h; *)
+	for i = x to x+w do
+		Graphics.set_color (rainbow (mod_float (abs_float ((float_of_int i -. 500.*.(Unix.gettimeofday ())) /. 500.)) 1.));
+		Graphics.moveto i y;
+		Graphics.lineto i (y+h)
+	done
 
-	let (x, y) = ints_of_vec f.position in
-	Graphics.fill_circle x y 5
+	(* let (x, y) = ints_of_vec f.position in
+	Graphics.fill_circle x y 5 *)
 
 (* Newton's method *)
 let find_zero f x0 =
