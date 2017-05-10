@@ -18,6 +18,7 @@ type game = {
 
 let star_score = 100
 
+(* Adds zeros before a number n to reach padding digits *)
 let pad_int padding n =
 	let s = string_of_int n in
 	let len = String.length s in
@@ -37,7 +38,7 @@ let draw_score size score =
 
 let is_bubble_at pos ball e =
 	match e with
-	| Bubble(bubble) -> distance pos ball.position <= bubble.radius
+	| Bubble(bubble) -> Collide.circle_point ball.position bubble.radius pos
 	| _ -> false
 
 let is_rope_at lastpos pos ball e =

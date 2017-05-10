@@ -41,6 +41,7 @@ let mouse_of_status s =
 let load_image path =
 	Ppm.input (open_in path)
 
+(* Lazily loads an image *)
 let get_image path =
 	let cache = ref None in
 	fun () ->
@@ -91,6 +92,7 @@ let draw_block (b : block) =
 
 let rainbow_colors = Array.of_list [Graphics.magenta; Graphics.blue; Graphics.cyan; Graphics.green; Graphics.yellow; Graphics.red]
 
+(* Returns the color of a rainbow, for t in [0; 1] *)
 let rainbow t =
 	let n = Array.length rainbow_colors in
 	let a = t *. (float_of_int n) in
@@ -133,6 +135,7 @@ let find_zero f x0 =
 	in
 	find_zero 0 x0
 
+(* Builds a poly line from a function f that takes a parameter t in [0; 1] and returns a vec *)
 let build_poly_line f =
 	let n = 100 in
 	Array.init (n+1) (fun i ->
@@ -209,6 +212,7 @@ let close () =
 	deinit ();
 	Graphics.close_graph ()
 
+(* Opens a window, calls step periodically, calls handle_event when an event is emitted *)
 let run step handle_event size g =
 	let (w, h) = ints_of_vec size in
 	Graphics.open_graph (" "^(string_of_int w)^"x"^(string_of_int h));

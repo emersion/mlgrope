@@ -25,6 +25,7 @@ let arrow_left_img = Frontend.get_image "img/arrow-left.ppm"
 let arrow_right_img = Frontend.get_image "img/arrow-right.ppm"
 let arrow_size = {x = 132.; y = 165.}
 
+(* Removes suffix from s, if present *)
 let strip_suffix suffix s =
 	let len = String.length s in
 	let suffix_len = String.length suffix in

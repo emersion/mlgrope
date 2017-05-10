@@ -75,12 +75,14 @@ let position_of_entity e =
 		position
 	| Block{vertices} -> average vertices
 
+(* Returns a function that updates a ball, to be used with List.map *)
 let swap_ball ball updated =
 	fun e ->
 		match e with
 		| Ball(b) -> if b == ball then Ball(updated) else e
 		| _ -> e
 
+(* Executes List.fold_left only on balls *)
 let fold_balls f acc l =
 	List.fold_left (fun acc e ->
 		match e with
