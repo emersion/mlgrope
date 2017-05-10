@@ -216,7 +216,7 @@ let handle_event path ed s s' =
 			in
 			if button then ed else {ed with selected = None}
 	)
-	| (_, {keypressed = true; key = '\027'}) | (_, {keypressed = true; key = 'q'}) ->
+	| (_, {keypressed = true; key = 'q'}) ->
 		raise Exit
 	| (_, {keypressed = true; key = 'w'}) ->
 		let ch = open_out path in
