@@ -4,16 +4,18 @@ open Graphics
 
 open Math2d
 open Collide
+open Mlgrope
 open Frontend
 open Level
 open Player
 
-exception SelectLevel of string
+exception SelectLevel of game_state
 
 type menu = {
 	size : vec;
 	levels : string array;
-	selected : int;
+	selected_index : int;
+	selected_level : game_state;
 }
 
 let levels_dir = "levels"
@@ -45,16 +47,22 @@ let draw_seek_button size dir =
 	Graphics.set_color seek_button_color;
 	Graphics.fill_rect (x - s/2) (y - s/2) s s
 
-let draw_level size l =
+let draw_level size name state =
+	Frontend.draw state;
 	Graphics.set_color Graphics.black;
 	Graphics.moveto 0 0;
-	Graphics.draw_string ("Level "^l)
+	Graphics.draw_string ("Level "^name)
 
 let step m =
-	draw_level m.size m.levels.(m.selected);
+	draw_level m.size m.levels.(m.selected_index) m.selected_level;
 	draw_seek_button m.size (-1);
 	draw_seek_button m.size 1;
 	m
+
+let load_level name =
+	let path = levels_dir^"/"^name^levels_ext in
+	let ch = open_in path in
+	Level.input ch
 
 let handle_event m s s' =
 	match s' with
@@ -63,12 +71,16 @@ let handle_event m s s' =
 		let delta =
 			if collide_seek_button m.size (-1) pos then -1
 			else if collide_seek_button m.size 1 pos then 1
-			else (
-				let path = levels_dir^"/"^m.levels.(m.selected)^levels_ext in
-				raise (SelectLevel path)
-			)
+			else raise (SelectLevel m.selected_level)
 		in
-		{m with selected = m.selected + delta}
+		let selected_index = m.selected_index + delta in
+		let selected_index =
+			if selected_index < 0 then 0
+			else if selected_index >= Array.length m.levels then (Array.length m.levels) - 1
+			else selected_index
+		in
+		let selected_level = load_level m.levels.(selected_index) in
+		{m with selected_index; selected_level}
 	| {keypressed = true; key = '\027'} -> raise Exit
 	| _ -> m
 
@@ -76,11 +88,9 @@ let run size =
 	let files = Sys.readdir levels_dir in
 	let levels = Array.map (strip_suffix levels_ext) files in
 	Array.sort String.compare levels;
+	if Array.length levels = 0 then raise (Failure "No level available") else
 
-	let m = {size; levels; selected = 0} in
+	let m = {size; levels; selected_index = 0; selected_level = load_level levels.(0)} in
 	try
 		Frontend.run step handle_event size m
-	with SelectLevel(path) ->
-		let ch = open_in path in
-		let gs = Level.input ch in
-		Player.run size gs
+	with SelectLevel(state) -> Player.run size state
