@@ -111,9 +111,9 @@ let compute_reaction pos sumForces colList linkList =
 (* I need to move the ball where it can go *)
 (* pos = previous pos, newPos position it would go to without any constraint *)
 let apply_constraint ball sumForces col linkList =
-	if sumForces =: Math2d.vec0 then ball.speed else
+	(* if sumForces =: Math2d.vec0 then -1 * ball.speed else *)
 	match col with
-	| Ball(b) -> projection ball.speed sumForces
+	| Ball(b) -> projection b.speed sumForces
 	| Rope(r) ->
 		if List.mem col linkList && distance ball.position r.position >= r.length
 		then projection ball.speed sumForces
