@@ -68,7 +68,10 @@ let draw_fan (f : fan) =
 	let (x, y) = ints_of_vec a in
 	let (w, h) = ints_of_vec f.size in
 	Graphics.set_color fan_color;
-	Graphics.fill_rect x y w h
+	Graphics.fill_rect x y w h;
+
+	let (x, y) = ints_of_vec f.position in
+	Graphics.fill_circle x y 5
 
 (* Newton's method *)
 let find_zero f x0 =
