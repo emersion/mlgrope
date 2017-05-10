@@ -68,7 +68,7 @@ let parse_block l : block =
 let parse_fan l : fan =
 	let (position, l) = parse_vec l in
 	let (size, l) = parse_vec l in
-	let (angle, _) = parse_float l in
+	let (angle, l) = parse_float l in
 	let (strength, _) = parse_float l in
 	{position; size; angle; strength}
 

@@ -7,6 +7,9 @@ open Mlgrope
 open Backend
 open Frontend
 open Level
+open Player
+
+exception Play of game_state
 
 let panel_width = 200.
 let panel_color = Graphics.rgb 127 127 127
@@ -21,7 +24,8 @@ type entity_property =
 	| Position
 	| Radius
 	| Size
-	| Vertex of vec
+	| Length
+	| Vertex of vec (* TODO *)
 
 type editor = {
 	size : vec;
@@ -85,27 +89,49 @@ let draw_panel size =
 	let l = panel_entities size in
 	List.iter Frontend.draw_entity l
 
-let handle_position e =
+let radius_handle_position e =
 	match e with
 	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
 		position +: {x = radius; y = 0.} (* TODO: draw handle in a corner *)
+	| _ -> raise Not_found
+
+let size_handle_position e =
+	match e with
 	| Fan{position; size; angle} ->
 		position +: {size with y = -. size.y /. 2.}
 	| _ -> raise Not_found
 
-let draw_handle e =
-	try
-		let (x, y) = ints_of_vec (handle_position e) in
-		let hs = int_of_float handle_size in
-		Graphics.set_color handle_color;
-		Graphics.fill_rect (x - hs/2) (y - hs/2) hs hs
-	with Not_found -> ()
+let length_handle_position e =
+	match e with
+	| Rope{position; length} | Elastic{position; length} ->
+		position +: {x = length; y = 0.} (* TODO: draw handle in a corner *)
+	| _ -> raise Not_found
+
+let handle_position prop e =
+	match prop with
+	| Radius -> radius_handle_position e
+	| Size -> size_handle_position e
+	| Length -> length_handle_position e
+	| _ -> raise Not_found
+
+let draw_handles e =
+	List.iter (fun prop ->
+		try
+			let (x, y) = ints_of_vec (handle_position prop e) in
+			let hs = int_of_float handle_size in
+			Graphics.set_color handle_color;
+			Graphics.fill_rect (x - hs/2) (y - hs/2) hs hs
+		with Not_found -> ()
+	) [Radius; Size; Length]
+
+let draw_entity e =
+	Frontend.draw_entity e;
+	draw_handles e
 
 let step ed =
 	draw_grid ed.size;
 	draw_panel ed.size;
-	Frontend.draw ed.state;
-	List.iter draw_handle ed.state;
+	List.iter draw_entity ed.state;
 	ed
 
 let stick_to_grid pt =
@@ -129,22 +155,19 @@ let intersect_entity pt entity =
 		let b = a +: size in
 		Collide.box_point a b pt
 
-let intersect_handle pt e =
-	Collide.circle_point (handle_position e) (handle_size /. 2.) pt
+let intersect_handles pt e =
+	List.find (fun prop ->
+		try
+			Collide.circle_point (handle_position prop e) (handle_size /. 2.) pt
+		with Not_found -> false
+	) [Radius; Size; Length]
 
 let rec intersect_entities pt state =
 	match state with
 	| e::state -> (
 		try
-			if intersect_handle pt e then
-				let prop = match e with
-				| Bubble(_) | Rope(_) | Elastic(_) -> Radius
-				| Fan(_) -> Size
-				| _ -> raise Not_found
-				in
-				Some(e, prop)
-			else
-				raise Not_found
+			let prop = intersect_handles pt e in
+			Some(e, prop)
 		with Not_found ->
 			if intersect_entity pt e then
 				Some(e, Position)
@@ -158,11 +181,17 @@ let swap_entity entity updated =
 
 let update_radius entity position =
 	let radius = distance (position_of_entity entity) position in
-	if radius < grid_size then entity else
 	match entity with
 	| Bubble(b) -> Bubble{b with radius}
 	| Rope(r) -> Rope{r with radius}
 	| Elastic(e) -> Elastic{e with radius}
+	| _ -> entity
+
+let update_length entity position =
+	let length = distance (position_of_entity entity) position in
+	match entity with
+	| Rope(r) -> Rope{r with length}
+	| Elastic(e) -> Elastic{e with length}
 	| _ -> entity
 
 let update_size entity position =
@@ -177,6 +206,7 @@ let update ed entity prop position =
 	let updated = match prop with
 	| Position -> update_position entity position
 	| Radius -> update_radius entity position
+	| Length -> update_length entity position
 	| Size -> update_size entity position
 	| _ -> entity
 	in
@@ -227,6 +257,8 @@ let handle_event path ed s s' =
 		close_out ch;
 		Printf.printf "Saved %s\n%!" path;
 		ed
+	| (_, {keypressed = true; key = 'p'}) ->
+		raise (Play ed.state)
 	| _ -> ed
 
 let run size path =
@@ -247,13 +279,22 @@ let run size path =
 			]
 	in
 
-	Printf.printf "Press w to save, q to quit\n%!";
+	Printf.printf "Press w to save, p to play, q to quit\n%!";
 
-	let ed = {
-		size;
-		state;
-		selected = None;
-		selected_property = Position;
-	}
+	let rec run state =
+		let ed = {
+			size;
+			state;
+			selected = None;
+			selected_property = Position;
+		}
+		in
+		try
+			Frontend.run step (handle_event path) (size +: {x = panel_width; y = 0.}) ed
+		with Play(state) -> (
+			try
+				Player.run size state
+			with _ -> run state
+		)
 	in
-	Frontend.run step (handle_event path) (size +: {x = panel_width; y = 0.}) ed
+	run state

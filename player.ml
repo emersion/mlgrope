@@ -42,8 +42,8 @@ let is_bubble_at pos ball e =
 
 let is_rope_at lastpos pos ball e =
 	match e with
-	| Rope(rope) ->
-		is_some (Collide.segments rope.position ball.position lastpos pos)
+	| Rope{position} | Elastic{position} ->
+		is_some (Collide.segments position ball.position lastpos pos)
 	| _ -> false
 
 let is_in_bounds size b =

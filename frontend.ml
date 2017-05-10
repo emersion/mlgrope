@@ -11,7 +11,6 @@ let tick_rate = 1. /. 60.
 
 let bubble_color = Graphics.red
 let rope_color = Graphics.green
-let fan_color = Graphics.cyan
 
 let rope_inner_radius = 5.
 let goal_size = {x = 75.; y = 40.}
@@ -101,16 +100,11 @@ let draw_fan (f : fan) =
 	let a = f.position -: {x = 0.; y = f.size.y /. 2.} in
 	let (x, y) = ints_of_vec a in
 	let (w, h) = ints_of_vec f.size in
-	(* Graphics.set_color fan_color;
-	Graphics.fill_rect x y w h; *)
 	for i = x to x+w do
-		Graphics.set_color (rainbow (mod_float (abs_float ((float_of_int i -. 500.*.(Unix.gettimeofday ())) /. 500.)) 1.));
+		Graphics.set_color (rainbow (mod_float (abs_float ((float_of_int i -. 300.*.f.strength*.(Unix.gettimeofday ())) /. 500.)) 1.));
 		Graphics.moveto i y;
 		Graphics.lineto i (y+h)
 	done
-
-	(* let (x, y) = ints_of_vec f.position in
-	Graphics.fill_circle x y 5 *)
 
 (* Newton's method *)
 let find_zero f x0 =
@@ -185,7 +179,18 @@ let draw_entity e =
 	| Fan(f) -> draw_fan f
 
 let draw gs =
-	List.iter draw_entity gs
+	(* First draw things that aren't a ball *)
+	List.iter (fun e ->
+		match e with
+		| Ball(_) -> ()
+		| _ -> draw_entity e
+	) gs;
+	(* Then only draw balls *)
+	List.iter (fun e ->
+		match e with
+		| Ball(_) -> draw_entity e
+		| _ -> ()
+	) gs
 
 let deinit () =
 	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = 0.; it_value = 0.} in
