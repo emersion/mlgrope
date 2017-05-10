@@ -114,7 +114,7 @@ let stick_to_grid pt =
 let intersect_entity pt entity =
 	match entity with
 	| Ball{position} ->
-		Mlgrope.ball_radius**2. >= squared_distance position pt
+		Collide.circle_point position Mlgrope.ball_radius pt
 	| Goal{position} ->
 		let (a, b) = ends_of_box position goal_size in
 		Collide.box_point a b pt
@@ -122,7 +122,7 @@ let intersect_entity pt entity =
 		let (a, b) = ends_of_box position star_size in
 		Collide.box_point a b pt
 	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
-		radius**2. >= squared_distance position pt
+		Collide.circle_point position radius pt
 	| Block{vertices} -> Collide.polygon_point vertices pt
 	| Fan{position; size; angle} ->
 		let a = position -: {x = 0.; y = size.y /. 2.} in
@@ -247,7 +247,7 @@ let run size path =
 			]
 	in
 
-	Printf.printf "Press w to save\n%!";
+	Printf.printf "Press w to save, q to quit\n%!";
 
 	let ed = {
 		size;
