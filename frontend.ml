@@ -54,6 +54,7 @@ let get_image path =
 let ball_img = get_image "img/ball.ppm"
 let goal_img = get_image "img/goal.ppm"
 let star_img = get_image "img/star.ppm"
+let spike_img = get_image "img/spike.ppm"
 
 
 let draw_bubble (b : bubble) =
@@ -106,6 +107,12 @@ let draw_fan (f : fan) =
 		Graphics.moveto i y;
 		Graphics.lineto i (y+h)
 	done
+
+let draw_spike (s : spike) =
+	let size = spike_edge_size *: vec1 in
+	let (corner, _) = ends_of_box s.position size in
+	let (x, y) = ints_of_vec corner in
+	Graphics.draw_image (spike_img ()) x y
 
 (* Newton's method *)
 let find_zero f x0 =
@@ -178,6 +185,7 @@ let draw_entity e =
 	| Star(s) -> draw_star s
 	| Block(b) -> draw_block b
 	| Fan(f) -> draw_fan f
+	| Spike(s) -> draw_spike s
 
 let draw gs =
 	(* First draw things that aren't a ball *)

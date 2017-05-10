@@ -72,6 +72,11 @@ let parse_fan l : fan =
 	let (strength, _) = parse_float l in
 	{position; size; angle; strength}
 
+let parse_spike l : spike =
+	let (position, l) = parse_vec l in
+	let (angle, _) = parse_float l in
+	{position; angle}
+
 let parse_entity t l =
 	match t with
 	| "ball" -> Ball(parse_ball l)
@@ -82,6 +87,7 @@ let parse_entity t l =
 	| "star" -> Star(parse_star l)
 	| "block" -> Block(parse_block l)
 	| "fan" -> Fan(parse_fan l)
+	| "spike" -> Spike(parse_spike l)
 	| _ -> raise Invalid_format
 
 let parse_line l gs =
@@ -146,6 +152,9 @@ let fields_of_block (b : block) =
 let fields_of_fan (f : fan) =
 	cons_vec f.position (cons_vec f.size (cons_float f.angle (cons_float f.strength [])))
 
+let fields_of_spike (s : spike) =
+	cons_vec s.position (cons_float s.angle [])
+
 let fields_of_entity e =
 	match e with
 	| Ball(b) -> "ball"::(fields_of_ball b)
@@ -156,6 +165,7 @@ let fields_of_entity e =
 	| Star(s) -> "star"::(fields_of_star s)
 	| Block(b) -> "block"::(fields_of_block b)
 	| Fan(f) -> "fan"::(fields_of_fan f)
+	| Spike(s) -> "spike"::(fields_of_spike s)
 
 let output ch gs =
 	set_binary_mode_out ch true;

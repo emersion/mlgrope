@@ -48,6 +48,7 @@ let update_position entity position =
 		let vertices = List.map (fun v -> v +: delta) b.vertices in
 		Block{b with vertices}
 	| Fan(f) -> Fan{f with position}
+	| Spike(s) -> Spike{s with position}
 
 let draw_grid size =
 	let grid_size = int_of_float grid_size in
@@ -73,7 +74,8 @@ let panel_entities size =
 		Goal{position};
 		Star{position};
 		(* TODO: block *)
-		Fan{position; size = {x = 30.; y = 20.}; angle = 0.; strength = 1.}
+		Fan{position; size = {x = 30.; y = 20.}; angle = 0.; strength = 1.};
+		Spike{position; angle = 0.};
 	] in
 	let n = List.length l in
 	let h = round_float (size.y /. (float_of_int (n+1))) in
@@ -154,6 +156,8 @@ let intersect_entity pt entity =
 		let a = position -: {x = 0.; y = size.y /. 2.} in
 		let b = a +: size in
 		Collide.box_point a b pt
+	| Spike{position} ->
+		Collide.circle_point position (spike_edge_size /. 2.) pt
 
 let intersect_handles pt e =
 	List.find (fun prop ->
