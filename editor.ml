@@ -7,6 +7,9 @@ open Mlgrope
 open Backend
 open Frontend
 open Level
+open Player
+
+exception Play of game_state
 
 let panel_width = 200.
 let panel_color = Graphics.rgb 127 127 127
@@ -254,6 +257,8 @@ let handle_event path ed s s' =
 		close_out ch;
 		Printf.printf "Saved %s\n%!" path;
 		ed
+	| (_, {keypressed = true; key = 'p'}) ->
+		raise (Play ed.state)
 	| _ -> ed
 
 let run size path =
@@ -274,13 +279,22 @@ let run size path =
 			]
 	in
 
-	Printf.printf "Press w to save, q to quit\n%!";
+	Printf.printf "Press w to save, p to play, q to quit\n%!";
 
-	let ed = {
-		size;
-		state;
-		selected = None;
-		selected_property = Position;
-	}
+	let rec run state =
+		let ed = {
+			size;
+			state;
+			selected = None;
+			selected_property = Position;
+		}
+		in
+		try
+			Frontend.run step (handle_event path) (size +: {x = panel_width; y = 0.}) ed
+		with Play(state) -> (
+			try
+				Player.run size state
+			with _ -> run state
+		)
 	in
-	Frontend.run step (handle_event path) (size +: {x = panel_width; y = 0.}) ed
+	run state
