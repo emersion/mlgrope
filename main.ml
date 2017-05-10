@@ -3,7 +3,7 @@ open Arg
 open Math2d
 open Mlgrope
 open Level
-open Player
+open Menu
 open Editor
 
 let size = {x = 500.; y = 500.}
@@ -18,12 +18,17 @@ let edit path =
 	Editor.run size path;
 	raise Exit
 
+let menu () =
+	Menu.run size;
+	raise Exit
+
 let () =
 	try
 		Arg.parse [
-			("-edit", Arg.String(edit), "Edit a level")
-		] play "Usage: mlgrope [-edit] level.csv";
+			("-play", Arg.String(play), "Play a level");
+			("-edit", Arg.String(edit), "Edit a level");
+		] play "Usage: mlgrope [-play|-edit] level.csv";
 
 		(* No level specified *)
-		play "levels/0.csv"
+		menu ()
 	with Exit -> ()

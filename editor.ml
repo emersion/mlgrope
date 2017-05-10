@@ -170,7 +170,7 @@ let remove ed entity =
 	{ed with state; selected = None}
 
 let handle_event path ed s s' =
-	let pos = Frontend.vec_of_status s' in
+	let pos = Frontend.mouse_of_status s' in
 	let outside = pos.x > ed.size.x in
 	let update ed e prop pos =
 		let pos = if outside then pos else stick_to_grid pos in

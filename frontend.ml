@@ -24,7 +24,7 @@ let mix a b t =
 let mix_vec v1 v2 t =
 	{ x = mix v1.x v2.x t; y = mix v1.y v2.y t }
 
-let vec_of_status s =
+let mouse_of_status s =
 	{x = float_of_int s.mouse_x; y = float_of_int s.mouse_y}
 
 
@@ -141,6 +141,13 @@ let step f =
 	f ();
 	Graphics.synchronize ()
 
+let close () =
+	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = 0.; it_value = 0.} in
+	Sys.set_signal Sys.sigalrm Sys.Signal_default;
+	try
+		Graphics.close_graph ()
+	with e -> Printf.printf "error2\n%!"; raise Exit
+
 let run step handle_event size g =
 	let (w, h) = (int_of_float size.x, int_of_float size.y) in
 	Graphics.open_graph (" "^(string_of_int w)^"x"^(string_of_int h));
@@ -148,11 +155,16 @@ let run step handle_event size g =
 	Graphics.set_window_title "Mlgrope";
 
 	let g = ref (step g) in
-	let s = ref {mouse_x = 0; mouse_y = 0; button = false; keypressed = false; key = '\000'} in
 	Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ -> g := step !g));
 	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = tick_rate; it_value = tick_rate} in
-	let events = [Graphics.Button_down; Graphics.Mouse_motion; Graphics.Key_pressed] in
-	Graphics.loop_at_exit events (fun s' ->
-		g := handle_event !g !s s';
-		s := s'
-	)
+	();
+
+	try
+		let events = [Graphics.Button_down; Graphics.Mouse_motion; Graphics.Key_pressed] in
+		let rec loop last_status =
+			let status = Graphics.wait_next_event events in
+			g := handle_event !g last_status status;
+			loop status
+		in
+		loop {mouse_x = 0; mouse_y = 0; button = false; keypressed = false; key = '\000'}
+	with e -> close (); raise e

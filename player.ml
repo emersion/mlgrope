@@ -98,7 +98,7 @@ let handle_click ball lastpos pos =
 let handle_event g s s' =
 	match s' with
 	| {button = true; mouse_x; mouse_y} ->
-		let pos = Frontend.vec_of_status s' in
+		let pos = Frontend.mouse_of_status s' in
 		let lastpos = match s with
 		| {button = true; mouse_x; mouse_y} -> {x = float_of_int mouse_x; y = float_of_int mouse_y}
 		| _ -> pos
