@@ -6,7 +6,7 @@ open Level
 open Menu
 open Editor
 
-let size = {x = 500.; y = 500.}
+let size = {x = 800.; y = 800.}
 
 let play path =
 	let ch = open_in path in
