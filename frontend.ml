@@ -214,6 +214,7 @@ let run step handle_event size g =
 	Graphics.open_graph (" "^(string_of_int w)^"x"^(string_of_int h));
 	Graphics.auto_synchronize false;
 	Graphics.set_window_title "Mlgrope";
+	Graphics.resize_window w h;
 
 	let g = ref (step g) in
 	Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ ->

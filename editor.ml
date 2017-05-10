@@ -283,8 +283,6 @@ let run size path =
 			]
 	in
 
-	Printf.printf "Press w to save, p to play, q to quit\n%!";
-
 	let rec run state =
 		let ed = {
 			size;
@@ -293,6 +291,7 @@ let run size path =
 			selected_property = Position;
 		}
 		in
+		Printf.printf "Press w to save, p to play, q to quit\n%!";
 		try
 			Frontend.run step (handle_event path) (size +: {x = panel_width; y = 0.}) ed
 		with Play(state) -> (
