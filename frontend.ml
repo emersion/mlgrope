@@ -101,7 +101,7 @@ let draw_fan (f : fan) =
 	let (x, y) = ints_of_vec a in
 	let (w, h) = ints_of_vec f.size in
 	for i = x to x+w do
-		Graphics.set_color (rainbow (mod_float (abs_float ((float_of_int i -. 500.*.(Unix.gettimeofday ())) /. 500.)) 1.));
+		Graphics.set_color (rainbow (mod_float (abs_float ((float_of_int i -. 300.*.f.strength*.(Unix.gettimeofday ())) /. 500.)) 1.));
 		Graphics.moveto i y;
 		Graphics.lineto i (y+h)
 	done
