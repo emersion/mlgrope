@@ -33,6 +33,13 @@ type block = {
 	color : Graphics.color;
 }
 
+type fan = {
+	position : vec;
+	size : vec;
+	angle : float;
+	strength : float;
+}
+
 type ball = {
 	position : vec;
 	speed : vec;
@@ -46,6 +53,7 @@ and entity =
 	| Elastic of elastic
 	| Star of star
 	| Block of block
+	| Fan of fan
 
 type game_state = entity list
 

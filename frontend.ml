@@ -13,6 +13,7 @@ let bubble_color = Graphics.red
 let rope_color = Graphics.green
 let goal_color = Graphics.blue
 let star_color = Graphics.yellow
+let fan_color = Graphics.cyan
 
 let rope_inner_radius = 5.
 let goal_radius = 5.
@@ -61,6 +62,13 @@ let draw_block (b : block) =
 	let l = List.map ints_of_vec b.vertices in
 	Graphics.set_color b.color;
 	Graphics.fill_poly (Array.of_list l)
+
+let draw_fan (f : fan) =
+	let a = f.position -: {x = 0.; y = f.size.y /. 2.} in
+	let (x, y) = ints_of_vec a in
+	let (w, h) = ints_of_vec f.size in
+	Graphics.set_color fan_color;
+	Graphics.fill_rect x y w h
 
 (* Newton's method *)
 let find_zero f x0 =
@@ -132,6 +140,7 @@ let draw_entity e =
 	| Goal(g) -> draw_goal g
 	| Star(s) -> draw_star s
 	| Block(b) -> draw_block b
+	| Fan(f) -> draw_fan f
 
 let draw gs =
 	List.iter draw_entity gs

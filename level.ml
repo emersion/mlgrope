@@ -65,6 +65,13 @@ let parse_block l : block =
 	let vertices = parse_field_list parse_vec l in
 	{vertices; color}
 
+let parse_fan l : fan =
+	let (position, l) = parse_vec l in
+	let (size, l) = parse_vec l in
+	let (angle, _) = parse_float l in
+	let (strength, _) = parse_float l in
+	{position; size; angle; strength}
+
 let parse_entity t l =
 	match t with
 	| "ball" -> Ball(parse_ball l)
@@ -74,6 +81,7 @@ let parse_entity t l =
 	| "goal" -> Goal(parse_goal l)
 	| "star" -> Star(parse_star l)
 	| "block" -> Block(parse_block l)
+	| "fan" -> Fan(parse_fan l)
 	| _ -> raise Invalid_format
 
 let parse_line l gs =
@@ -135,6 +143,9 @@ let fields_of_star (s : star) =
 let fields_of_block (b : block) =
 	cons_color b.color (List.fold_left (fun l v -> cons_vec v l) [] b.vertices)
 
+let fields_of_fan (f : fan) =
+	cons_vec f.position (cons_vec f.size (cons_float f.angle (cons_float f.strength [])))
+
 let fields_of_entity e =
 	match e with
 	| Ball(b) -> "ball"::(fields_of_ball b)
@@ -144,6 +155,7 @@ let fields_of_entity e =
 	| Goal(g) -> "goal"::(fields_of_goal g)
 	| Star(s) -> "star"::(fields_of_star s)
 	| Block(b) -> "block"::(fields_of_block b)
+	| Fan(f) -> "fan"::(fields_of_fan f)
 
 let output ch gs =
 	set_binary_mode_out ch true;

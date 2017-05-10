@@ -33,6 +33,13 @@ type block = {
 	color : Graphics.color;
 }
 
+type fan = {
+	position : vec;
+	size : vec;
+	angle : float;
+	strength : float;
+}
+
 type ball = {
 	position : vec;
 	speed : vec;
@@ -46,6 +53,7 @@ and entity =
 	| Elastic of elastic
 	| Star of star
 	| Block of block
+	| Fan of fan
 
 type game_state = entity list
 
@@ -54,7 +62,7 @@ let ball_radius = 10.0
 let position_of_entity e =
 	match e with
 	| Ball{position} | Bubble{position} | Rope{position} | Goal{position}
-	| Elastic{position} | Star{position} ->
+	| Elastic{position} | Star{position} | Fan{position} ->
 		position
 	| Block{vertices} -> average vertices
 

@@ -20,6 +20,7 @@ let handle_color = Graphics.black
 type entity_property =
 	| Position
 	| Radius
+	| Size
 	| Vertex of vec
 
 type editor = {
@@ -42,6 +43,7 @@ let update_position entity position =
 		let delta = position -: center in
 		let vertices = List.map (fun v -> v +: delta) b.vertices in
 		Block{b with vertices}
+	| Fan(f) -> Fan{f with position}
 
 let draw_grid size =
 	let grid_size = int_of_float grid_size in
@@ -67,6 +69,7 @@ let panel_entities size =
 		Goal{position};
 		Star{position};
 		(* TODO: block *)
+		Fan{position; size = {x = 30.; y = 20.}; angle = 0.; strength = 1.}
 	] in
 	let n = List.length l in
 	let h = round_float (size.y /. (float_of_int (n+1))) in
@@ -86,24 +89,23 @@ let handle_position e =
 	match e with
 	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
 		position +: {x = radius; y = 0.} (* TODO: draw handle in a corner *)
+	| Fan{position; size; angle} ->
+		position +: {size with y = -. size.y /. 2.}
 	| _ -> raise Not_found
 
-let draw_radius_handle e =
-	match e with
-	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
-		let (x, y) = ints_of_vec position in
-		let r = int_of_float radius in
-		let (x, y) = (x + r, y) in (* TODO: draw handle in a corner *)
+let draw_handle e =
+	try
+		let (x, y) = ints_of_vec (handle_position e) in
 		let hs = int_of_float handle_size in
 		Graphics.set_color handle_color;
 		Graphics.fill_rect (x - hs/2) (y - hs/2) hs hs
-	| _ -> ()
+	with Not_found -> ()
 
 let step ed =
 	draw_grid ed.size;
 	draw_panel ed.size;
 	Frontend.draw ed.state;
-	List.iter draw_radius_handle ed.state;
+	List.iter draw_handle ed.state;
 	ed
 
 let stick_to_grid pt =
@@ -117,10 +119,13 @@ let intersect_entity pt entity =
 		Frontend.goal_radius**2. >= squared_distance position pt
 	| Star{position} ->
 		Frontend.star_radius**2. >= squared_distance position pt
-	| Bubble{position; radius} | Rope{position; radius} ->
+	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
 		radius**2. >= squared_distance position pt
 	| Block{vertices} -> Collide.polygon_point vertices pt
-	| _ -> false
+	| Fan{position; size; angle} ->
+		let a = position -: {x = 0.; y = size.y /. 2.} in
+		let b = a +: size in
+		Collide.box_point a b pt
 
 let intersect_handle pt e =
 	Collide.circle_point (handle_position e) (handle_size /. 2.) pt
@@ -130,7 +135,11 @@ let rec intersect_entities pt state =
 	| e::state -> (
 		try
 			if intersect_handle pt e then
-				Some(e, Radius)
+				let prop = match e with
+				| Bubble(_) | Rope(_) | Elastic(_) -> Radius
+				| Fan(_) -> Size
+				in
+				Some(e, prop)
 			else
 				raise Not_found
 		with Not_found ->
@@ -153,11 +162,19 @@ let update_radius entity position =
 	| Elastic(e) -> Elastic{e with radius}
 	| _ -> entity
 
+let update_size entity position =
+	let delta = position -: (position_of_entity entity) in
+	let size = {x = abs_float delta.x; y = abs_float (2. *. delta.y)} in
+	match entity with
+	| Fan(f) -> Fan{f with size}
+	| _ -> entity
+
 let update ed entity prop position =
 	let ed = {ed with selected_property = prop} in
 	let updated = match prop with
 	| Position -> update_position entity position
 	| Radius -> update_radius entity position
+	| Size -> update_size entity position
 	| _ -> entity
 	in
 	let state = List.map (swap_entity entity updated) ed.state in
