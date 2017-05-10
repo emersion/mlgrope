@@ -51,11 +51,9 @@ let draw_level size l =
 	Graphics.draw_string ("Level "^l)
 
 let step m =
-	Frontend.step (fun () ->
-		draw_level m.size m.levels.(m.selected);
-		draw_seek_button m.size (-1);
-		draw_seek_button m.size 1
-	);
+	draw_level m.size m.levels.(m.selected);
+	draw_seek_button m.size (-1);
+	draw_seek_button m.size 1;
 	m
 
 let handle_event m s s' =

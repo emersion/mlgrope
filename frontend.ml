@@ -136,11 +136,6 @@ let draw_entity e =
 let draw gs =
 	List.iter draw_entity gs
 
-let step f =
-	Graphics.clear_graph ();
-	f ();
-	Graphics.synchronize ()
-
 let close () =
 	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = 0.; it_value = 0.} in
 	Sys.set_signal Sys.sigalrm Sys.Signal_default;
@@ -155,7 +150,11 @@ let run step handle_event size g =
 	Graphics.set_window_title "Mlgrope";
 
 	let g = ref (step g) in
-	Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ -> g := step !g));
+	Sys.set_signal Sys.sigalrm (Sys.Signal_handle (fun _ ->
+		Graphics.clear_graph ();
+		g := step !g;
+		Graphics.synchronize ()
+	));
 	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = tick_rate; it_value = tick_rate} in
 	();
 

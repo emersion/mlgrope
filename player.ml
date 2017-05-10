@@ -82,10 +82,8 @@ let step g =
 	if in_bounds = 0 then raise OutOfBoundsException else
 	let g = {g with time = t; state} in
 	let score = compute_score g.state in
-	Frontend.step (fun () ->
-		Frontend.draw g.state;
-		draw_score g.size score
-	);
+	Frontend.draw g.state;
+	draw_score g.size score;
 	g
 
 let handle_click ball lastpos pos =

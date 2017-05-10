@@ -100,12 +100,10 @@ let draw_radius_handle e =
 	| _ -> ()
 
 let step ed =
-	Frontend.step (fun () ->
-		draw_grid ed.size;
-		draw_panel ed.size;
-		Frontend.draw ed.state;
-		List.iter draw_radius_handle ed.state
-	);
+	draw_grid ed.size;
+	draw_panel ed.size;
+	Frontend.draw ed.state;
+	List.iter draw_radius_handle ed.state;
 	ed
 
 let stick_to_grid pt =
