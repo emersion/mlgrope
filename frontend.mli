@@ -7,6 +7,7 @@ val goal_size : vec
 val star_size : vec
 
 val mouse_of_status : status -> vec
+val get_image : string -> (unit -> image)
 
 val draw_entity : entity -> unit
 val draw : game_state -> unit
