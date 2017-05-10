@@ -33,6 +33,13 @@ type block = {
 	color : Graphics.color;
 }
 
+type spike = {
+	position : vec;
+	angle : float;
+}
+
+let spike_edge_size = 40.0
+
 type fan = {
 	position : vec;
 	size : vec;
@@ -45,6 +52,7 @@ type ball = {
 	speed : vec;
 	links : entity list;
 }
+
 and entity =
 	| Ball of ball
 	| Bubble of bubble
@@ -54,6 +62,7 @@ and entity =
 	| Star of star
 	| Block of block
 	| Fan of fan
+	| Spike of spike
 
 type game_state = entity list
 
@@ -62,7 +71,7 @@ let ball_radius = 20.0
 let position_of_entity e =
 	match e with
 	| Ball{position} | Bubble{position} | Rope{position} | Goal{position}
-	| Elastic{position} | Star{position} | Fan{position} ->
+	| Elastic{position} | Star{position} | Fan{position} | Spike{position} ->
 		position
 	| Block{vertices} -> average vertices
 

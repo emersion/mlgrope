@@ -4,7 +4,6 @@ let round_float x =
 let is_between a b x =
 	(min a b) <= x && x <= (max a b)
 
-
 type vec = {
 	x : float;
 	y : float;
