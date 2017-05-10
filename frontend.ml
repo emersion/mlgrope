@@ -11,6 +11,7 @@ let tick_rate = 1. /. 60.
 
 let bubble_color = Graphics.red
 let rope_color = Graphics.green
+let elastic_color = Graphics.blue
 
 let rope_inner_radius = 5.
 let goal_size = {x = 75.; y = 40.}
@@ -68,7 +69,7 @@ let draw_rope (r : rope) =
 
 let draw_elastic (e : elastic) =
 	let (x, y) = ints_of_vec e.position in
-	Graphics.set_color rope_color;
+	Graphics.set_color elastic_color;
 	Graphics.fill_circle x y (int_of_float rope_inner_radius);
 	Graphics.draw_circle x y (int_of_float e.radius)
 
