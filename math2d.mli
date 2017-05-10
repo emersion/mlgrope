@@ -8,6 +8,7 @@ type vec = {
 }
 
 val vec0 : vec
+val vec1 : vec
 
 val ints_of_vec : vec -> (int * int)
 val map : (float -> float) -> vec -> vec

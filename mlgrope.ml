@@ -57,7 +57,7 @@ and entity =
 
 type game_state = entity list
 
-let ball_radius = 10.0
+let ball_radius = 20.0
 
 let position_of_entity e =
 	match e with

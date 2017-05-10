@@ -2,6 +2,7 @@ open Graphics
 open Sys
 open Unix
 
+open Ppm
 open Math2d
 open Mlgrope
 open Backend
@@ -16,8 +17,8 @@ let star_color = Graphics.yellow
 let fan_color = Graphics.cyan
 
 let rope_inner_radius = 5.
-let goal_radius = 5.
-let star_radius = 5.
+let goal_radius = 10.
+let star_radius = 10.
 
 let mix a b t =
 	t *. a +. (1. -. t) *. b
@@ -27,6 +28,22 @@ let mix_vec v1 v2 t =
 
 let mouse_of_status s =
 	{x = float_of_int s.mouse_x; y = float_of_int s.mouse_y}
+
+
+let load_image path =
+	Ppm.input (open_in path)
+
+let get_image path =
+	let cache = ref None in
+	fun () ->
+		match !cache with
+		| Some(img) -> img
+		| None ->
+			let img = load_image path in
+			cache := Some(img);
+			img
+
+let ball_img = get_image "img/shrek1_40pink.ppm"
 
 
 let draw_bubble (b : bubble) =
@@ -128,9 +145,11 @@ let draw_link b l =
 	| _ -> ()
 
 let draw_ball (b : ball) =
-	let (x, y) = ints_of_vec b.position in
-	Graphics.set_color ball_color;
-	Graphics.fill_circle x y (int_of_float Mlgrope.ball_radius);
+	let corner = b.position -: (ball_radius *: vec1) in
+	let (x, y) = ints_of_vec corner in
+	(* Graphics.set_color ball_color;
+	Graphics.fill_circle x y (int_of_float Mlgrope.ball_radius); *)
+	Graphics.draw_image (ball_img ()) x y;
 
 	List.iter (draw_link b) b.links
 
@@ -148,15 +167,16 @@ let draw_entity e =
 let draw gs =
 	List.iter draw_entity gs
 
-let close () =
+let deinit () =
 	let _ = Unix.setitimer Unix.ITIMER_REAL {it_interval = 0.; it_value = 0.} in
-	Sys.set_signal Sys.sigalrm Sys.Signal_default;
-	try
-		Graphics.close_graph ()
-	with e -> Printf.printf "error2\n%!"; raise Exit
+	Sys.set_signal Sys.sigalrm Sys.Signal_default
+
+let close () =
+	deinit ();
+	Graphics.close_graph ()
 
 let run step handle_event size g =
-	let (w, h) = (int_of_float size.x, int_of_float size.y) in
+	let (w, h) = ints_of_vec size in
 	Graphics.open_graph (" "^(string_of_int w)^"x"^(string_of_int h));
 	Graphics.auto_synchronize false;
 	Graphics.set_window_title "Mlgrope";
@@ -178,4 +198,4 @@ let run step handle_event size g =
 			loop status
 		in
 		loop {mouse_x = 0; mouse_y = 0; button = false; keypressed = false; key = '\000'}
-	with e -> close (); raise e
+	with e -> deinit (); raise e

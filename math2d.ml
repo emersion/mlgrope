@@ -11,6 +11,7 @@ type vec = {
 }
 
 let vec0 = {x = 0.; y = 0.}
+let vec1 = {x = 1.; y = 1.}
 
 let ints_of_vec p =
 	(int_of_float p.x, int_of_float p.y)
