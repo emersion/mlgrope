@@ -8,7 +8,7 @@ open Backend
 open Frontend
 open Level
 
-let panel_width = 100.
+let panel_width = 200.
 let panel_color = Graphics.rgb 127 127 127
 
 let grid_size = 10.
@@ -114,13 +114,15 @@ let stick_to_grid pt =
 let intersect_entity pt entity =
 	match entity with
 	| Ball{position} ->
-		Mlgrope.ball_radius**2. >= squared_distance position pt
+		Collide.circle_point position Mlgrope.ball_radius pt
 	| Goal{position} ->
-		Frontend.goal_radius**2. >= squared_distance position pt
+		let (a, b) = ends_of_box position goal_size in
+		Collide.box_point a b pt
 	| Star{position} ->
-		Frontend.star_radius**2. >= squared_distance position pt
+		let (a, b) = ends_of_box position star_size in
+		Collide.box_point a b pt
 	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
-		radius**2. >= squared_distance position pt
+		Collide.circle_point position radius pt
 	| Block{vertices} -> Collide.polygon_point vertices pt
 	| Fan{position; size; angle} ->
 		let a = position -: {x = 0.; y = size.y /. 2.} in
@@ -138,6 +140,7 @@ let rec intersect_entities pt state =
 				let prop = match e with
 				| Bubble(_) | Rope(_) | Elastic(_) -> Radius
 				| Fan(_) -> Size
+				| _ -> raise Not_found
 				in
 				Some(e, prop)
 			else
@@ -244,7 +247,7 @@ let run size path =
 			]
 	in
 
-	Printf.printf "Press w to save\n%!";
+	Printf.printf "Press w to save, q to quit\n%!";
 
 	let ed = {
 		size;

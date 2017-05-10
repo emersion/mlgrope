@@ -21,8 +21,9 @@ type menu = {
 let levels_dir = "levels"
 let levels_ext = ".csv"
 
-let seek_button_size = 40.
-let seek_button_color = Graphics.blue
+let arrow_left_img = Frontend.get_image "img/arrow-left.ppm"
+let arrow_right_img = Frontend.get_image "img/arrow-right.ppm"
+let arrow_size = {x = 132.; y = 165.}
 
 let strip_suffix suffix s =
 	let len = String.length s in
@@ -31,21 +32,17 @@ let strip_suffix suffix s =
 	if String.sub s (len - suffix_len) suffix_len <> suffix then s else
 	String.sub s 0 (len - suffix_len)
 
-let seek_button_position size dir =
-	let x = if dir < 0 then seek_button_size else size.x -. seek_button_size in
-	{x; y = 0.5 *. size.y}
+let arrow_corner size dir =
+	let x = if dir < 0 then -. 0.2 *. arrow_size.x else size.x -. 0.8 *. arrow_size.x in
+	{x; y = 0.5 *. (size.y -. arrow_size.y)}
 
-let collide_seek_button size dir pos =
-	let btn_pos = seek_button_position size dir in
-	let s = {x = seek_button_size; y = seek_button_size} in
-	let corner = btn_pos -: (0.5 *: s) in
-	Collide.box_point corner (corner +: s) pos
+let collide_arrow size dir pos =
+	let corner = arrow_corner size dir in
+	Collide.box_point corner (corner +: arrow_size) pos
 
-let draw_seek_button size dir =
-	let (x, y) = ints_of_vec (seek_button_position size dir) in
-	let s = int_of_float seek_button_size in
-	Graphics.set_color seek_button_color;
-	Graphics.fill_rect (x - s/2) (y - s/2) s s
+let draw_arrow size dir =
+	let (x, y) = ints_of_vec (arrow_corner size dir) in
+	Graphics.draw_image (if dir < 0 then arrow_left_img () else arrow_right_img ()) x y
 
 let draw_level size name state =
 	Frontend.draw state;
@@ -55,8 +52,8 @@ let draw_level size name state =
 
 let step m =
 	draw_level m.size m.levels.(m.selected_index) m.selected_level;
-	draw_seek_button m.size (-1);
-	draw_seek_button m.size 1;
+	draw_arrow m.size (-1);
+	draw_arrow m.size 1;
 	m
 
 let load_level name =
@@ -69,8 +66,8 @@ let handle_event m s s' =
 	| {button = true} ->
 		let pos = mouse_of_status s' in
 		let delta =
-			if collide_seek_button m.size (-1) pos then -1
-			else if collide_seek_button m.size 1 pos then 1
+			if collide_arrow m.size (-1) pos then -1
+			else if collide_arrow m.size 1 pos then 1
 			else raise (SelectLevel m.selected_level)
 		in
 		let selected_index = m.selected_index + delta in

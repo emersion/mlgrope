@@ -9,16 +9,13 @@ open Backend
 
 let tick_rate = 1. /. 60.
 
-let ball_color = Graphics.black
 let bubble_color = Graphics.red
 let rope_color = Graphics.green
-let goal_color = Graphics.blue
-let star_color = Graphics.yellow
 let fan_color = Graphics.cyan
 
 let rope_inner_radius = 5.
-let goal_radius = 10.
-let star_radius = 10.
+let goal_size = {x = 75.; y = 40.}
+let star_size = {x = 40.; y = 40.}
 
 let mix a b t =
 	t *. a +. (1. -. t) *. b
@@ -43,7 +40,9 @@ let get_image path =
 			cache := Some(img);
 			img
 
-let ball_img = get_image "img/shrek1_40pink.ppm"
+let ball_img = get_image "img/ball.ppm"
+let goal_img = get_image "img/goal.ppm"
+let star_img = get_image "img/star.ppm"
 
 
 let draw_bubble (b : bubble) =
@@ -64,16 +63,14 @@ let draw_elastic (e : elastic) =
 	Graphics.draw_circle x y (int_of_float e.radius)
 
 let draw_goal (g : goal) =
-	let (x, y) = ints_of_vec g.position in
-	let r = int_of_float goal_radius in
-	Graphics.set_color goal_color;
-	Graphics.fill_rect (x - r) (y - r) (r*2) (r*2)
+	let (corner, _) = ends_of_box g.position goal_size in
+	let (x, y) = ints_of_vec corner in
+	Graphics.draw_image (goal_img ()) x y
 
 let draw_star (s : star) =
-	let (x, y) = ints_of_vec s.position in
-	let r = int_of_float star_radius in
-	Graphics.set_color star_color;
-	Graphics.fill_rect (x - r) (y - r) (r*2) (r*2)
+	let (corner, _) = ends_of_box s.position star_size in
+	let (x, y) = ints_of_vec corner in
+	Graphics.draw_image (star_img ()) x y
 
 let draw_block (b : block) =
 	let l = List.map ints_of_vec b.vertices in
@@ -145,10 +142,8 @@ let draw_link b l =
 	| _ -> ()
 
 let draw_ball (b : ball) =
-	let corner = b.position -: (ball_radius *: vec1) in
+	let corner = b.position -: ball_radius *: vec1 in
 	let (x, y) = ints_of_vec corner in
-	(* Graphics.set_color ball_color;
-	Graphics.fill_circle x y (int_of_float Mlgrope.ball_radius); *)
 	Graphics.draw_image (ball_img ()) x y;
 
 	List.iter (draw_link b) b.links
