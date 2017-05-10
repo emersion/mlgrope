@@ -8,7 +8,7 @@ open Backend
 open Frontend
 open Level
 
-let panel_width = 100.
+let panel_width = 200.
 let panel_color = Graphics.rgb 127 127 127
 
 let grid_size = 10.
@@ -116,7 +116,8 @@ let intersect_entity pt entity =
 	| Ball{position} ->
 		Mlgrope.ball_radius**2. >= squared_distance position pt
 	| Goal{position} ->
-		Frontend.goal_radius**2. >= squared_distance position pt
+		let (a, b) = ends_of_box position goal_size in
+		Collide.box_point a b pt
 	| Star{position} ->
 		Frontend.star_radius**2. >= squared_distance position pt
 	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
@@ -138,6 +139,7 @@ let rec intersect_entities pt state =
 				let prop = match e with
 				| Bubble(_) | Rope(_) | Elastic(_) -> Radius
 				| Fan(_) -> Size
+				| _ -> raise Not_found
 				in
 				Some(e, prop)
 			else

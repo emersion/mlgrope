@@ -64,3 +64,8 @@ let fold_segments f acc l =
 let average l =
 	let (sum, n) = List.fold_left (fun (sum, n) v -> (sum +: v, n+1)) (vec0, 0) l in
 	(1. /. float_of_int n) *: sum
+
+let ends_of_box center size =
+	let a = center -: 0.5 *: size in
+	let b = a +: size in
+	(a, b)

@@ -25,3 +25,4 @@ val normalize : vec -> vec
 val reflect : vec -> vec -> vec
 val fold_segments : ('a -> (vec * vec) -> 'a) -> 'a -> vec list -> 'a
 val average : vec list -> vec
+val ends_of_box : vec -> vec -> (vec * vec)
