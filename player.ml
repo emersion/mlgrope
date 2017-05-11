@@ -14,6 +14,7 @@ type game = {
 	size : vec;
 	time : float;
 	paused : bool;
+	score : int;
 	state : game_state;
 }
 
@@ -60,13 +61,18 @@ let is_in_bounds size b =
 	Collide.box_point vec0 size b.position
 
 let compute_score gs =
-	fold_balls (fun score ball ->
-		List.fold_left (fun score e ->
-			match e with
-			| Star(_) -> score + star_score
-			| _ -> score
-		) 0 ball.links
-	) 0 gs
+	List.fold_left (fun (score, gs) e ->
+		match e with
+		| Ball(b) ->
+			let (score, links) = List.fold_left (fun (score, links) e ->
+				match e with
+				| Star(_) -> (score + star_score, links)
+				| _ -> (score, e::links)
+			) (score, []) b.links
+			in
+			(score, Ball{b with links}::gs)
+		| _ -> (score, e::gs)
+	) (0, []) gs
 
 let step g =
 	let t = get_time () in
@@ -86,10 +92,10 @@ let step g =
 		| _ -> (e::l, n)
 	) ([], 0) state in
 	if in_bounds = 0 then raise (OutOfBoundsException state) else
-	let g = {g with time = t; state} in
-	let score = compute_score g.state in
+	let (score, state) = compute_score state in
+	let g = {g with time = t; score = g.score + score; state} in
 	Frontend.draw g.state;
-	draw_score g.size score;
+	draw_score g.size g.score;
 	g
 
 let handle_click ball lastpos pos =
@@ -125,6 +131,7 @@ let run size state =
 		size;
 		time = get_time ();
 		paused = false;
+		score = 0;
 		state;
 	} in
 	Printf.printf "Press Esc to quit, space to pause\n%!";
