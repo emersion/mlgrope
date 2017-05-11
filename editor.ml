@@ -1,6 +1,7 @@
 open Sys
 open Graphics
 
+open Util
 open Math2d
 open Collide
 open Mlgrope
@@ -80,7 +81,7 @@ let panel_entities size =
 		Star{position};
 		(* TODO: block *)
 		Fan{position; size = {x = 30.; y = 20.}; angle = 0.; strength = 1.};
-		Spike{position; angle = 0.};
+		Spike{position; angle = 0.5 *. pi};
 	] in
 	let n = List.length l in
 	let h = round_float (size.y /. (float_of_int (n+1))) in
@@ -222,7 +223,9 @@ let update_angle entity position =
 	let delta = position -: (position_of_entity entity) in
 	let angle = angle_of_vec delta in
 	match entity with
-	| Spike(s) -> Spike{s with angle}
+	| Spike(s) ->
+		let angle = 0.5 *. pi *. (round_float (angle /. (0.5 *. pi))) in
+		Spike{s with angle}
 	| _ -> entity
 
 let update ed entity prop position =

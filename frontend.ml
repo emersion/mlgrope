@@ -2,6 +2,7 @@ open Graphics
 open Sys
 open Unix
 
+open Util
 open Image
 open Math2d
 open Mlgrope
@@ -40,8 +41,10 @@ let mouse_of_status s =
 let ball_img = Image.get (Image.Ppm_file "img/ball.ppm")
 let goal_img = Image.get (Image.Ppm_file "img/goal.ppm")
 let star_img = Image.get (Image.Ppm_file "img/star.ppm")
-let spike_img = Image.get (Image.Ppm_file "img/spike.ppm")
-
+let spike_up_img = Image.get (Image.Ppm_file "img/spike.ppm")
+let spike_left_img = Image.get (Image.Rotation(0.5*.pi, (Image.Ppm_file "img/spike.ppm")))
+let spike_down_img = Image.get (Image.Rotation(pi, (Image.Ppm_file "img/spike.ppm")))
+let spike_right_img = Image.get (Image.Rotation(1.5*.pi, (Image.Ppm_file "img/spike.ppm")))
 
 let draw_bubble (b : bubble) =
 	let (x, y) = ints_of_vec b.position in
@@ -96,10 +99,17 @@ let draw_fan (f : fan) =
 	done
 
 let draw_spike (s : spike) =
+	let pos = int_of_float (round_float (s.angle /. (0.5 *. pi))) in
+	let img = match pos with
+	| 1 -> spike_up_img
+	| 2 -> spike_left_img
+	| 3 -> spike_down_img
+	| _ -> spike_right_img
+	in
 	let size = spike_edge_size *: vec1 in
 	let (corner, _) = ends_of_box s.position size in
 	let (x, y) = ints_of_vec corner in
-	Graphics.draw_image (spike_img ()) x y
+	Graphics.draw_image (img ()) x y
 
 (* Newton's method *)
 let find_zero f x0 =

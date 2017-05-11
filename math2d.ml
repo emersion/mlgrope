@@ -1,10 +1,8 @@
 open Util
 
-let round_float x =
-	snd (modf (x +. copysign 0.5 x))
-
 let is_between a b x =
 	(min a b) <= x && x <= (max a b)
+
 
 type vec = {
 	x : float;
