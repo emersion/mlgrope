@@ -97,13 +97,10 @@ let add_links_entity pos entl links prev_links =
 				then e::acc
 				else acc
 			| Fan(f) ->
-				let p = pos in
-				if Collide.box_point (f.position +: {x = 0.; y = f.size.y /. 2.})
-														 (f.position +: {x = f.size.x; y  = 0.})
-														 {x = p.x *. (cos f.angle) +. p.y *. (sin f.angle);
-														  y = -1. *. p.x *. (sin f.angle) +. p.y *. (cos f.angle) }
-				then e::acc
-				else acc
+				let p = rotate f.angle (pos -: f.position) in
+				let a = vec0 -:  {x = 0.; y = f.size.y /. 2.} in
+				let b = a +: f.size in
+				if Collide.box_point a b p then e::acc else acc
 		 	| Magnet(m) ->
 				if squared_distance m.position pos <= m.radius *. m.radius
 				then e::acc
@@ -135,7 +132,10 @@ let compute_forces pos linkList =
 			if d >= e.length
 			then ((elastic_force d e) *: direction pos e.position ::(fst acc), snd acc)
 			else acc
-		| Fan(f) ->((50. *. f.strength) *: {x = cos f.angle; y = sin f.angle}::(fst acc), snd acc)
+		| Fan(f) ->
+			let v = {x = cos f.angle; y = sin f.angle} in
+			Printf.printf"%f %f\n%!" v.x v.y;
+			((200. *. f.strength ) *: {x = cos f.angle; y = sin f.angle}::(fst acc), snd acc)
 		| _ -> acc
 		) ([],false) linkList in
 	if isBubble then linkList else gravity::linkList
