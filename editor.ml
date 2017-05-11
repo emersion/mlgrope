@@ -153,6 +153,14 @@ let draw_handle prop e =
 	match prop with
 	| Angle ->
 		Graphics.fill_circle x y (hs/2)
+	| Strength ->
+		let l = Array.of_list [
+			(x, y + hs/2);
+			(x - hs/2, y);
+			(x, y - hs/2);
+			(x + hs/2, y);
+		] in
+		Graphics.fill_poly l
 	| _ ->
 		Graphics.fill_rect (x - hs/2) (y - hs/2) hs hs
 
