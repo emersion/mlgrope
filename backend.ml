@@ -132,10 +132,7 @@ let compute_forces pos linkList =
 			if d >= e.length
 			then ((elastic_force d e) *: direction pos e.position ::(fst acc), snd acc)
 			else acc
-		| Fan(f) ->
-			let v = {x = cos f.angle; y = sin f.angle} in
-			Printf.printf"%f %f\n%!" v.x v.y;
-			((200. *. f.strength ) *: {x = cos f.angle; y = sin f.angle}::(fst acc), snd acc)
+		| Fan(f) -> ((200. *. f.strength ) *: {x = cos f.angle; y = sin f.angle}::(fst acc), snd acc)
 		| _ -> acc
 		) ([],false) linkList in
 	if isBubble then linkList else gravity::linkList
