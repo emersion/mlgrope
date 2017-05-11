@@ -2,6 +2,7 @@ open String
 open Sys
 open Graphics
 
+open Image
 open Math2d
 open Collide
 open Mlgrope
@@ -21,8 +22,8 @@ type menu = {
 let levels_dir = "levels"
 let levels_ext = ".csv"
 
-let arrow_left_img = Frontend.get_image "img/arrow-left.ppm"
-let arrow_right_img = Frontend.get_image "img/arrow-right.ppm"
+let arrow_left_img = Image.get (Image.Ppm_file "img/arrow-left.ppm")
+let arrow_right_img = Image.get (Image.Ppm_file "img/arrow-right.ppm")
 let arrow_size = {x = 132.; y = 165.}
 
 (* Removes suffix from s, if present *)

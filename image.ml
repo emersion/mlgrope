@@ -1,6 +1,11 @@
 open String
 open Graphics
 
+type image_source =
+	| Ppm of in_channel
+	| Ppm_file of string
+	| Rotate of float * image_source
+
 (* This color will be replaced by a transparent background *)
 let alpha_color = 0xFF00FF
 
@@ -8,7 +13,7 @@ let rec input_ppm_line ch =
 	let l = input_line ch in
 	if String.length l > 0 && l.[0] <> '#' then l else input_ppm_line ch
 
-let input ch =
+let input_ppm ch =
 	set_binary_mode_in ch true;
 	let is_bw = (input_ppm_line ch <> "P6") in
 	let (w, h )= Scanf.sscanf (input_ppm_line ch) "%d %d" (fun x y -> (x, y)) in
@@ -32,4 +37,27 @@ let input ch =
 		done
 	done;
 	close_in ch;
-	Graphics.make_image m
+	m
+
+let rotate angle m =
+	m
+
+let load src =
+	let rec load src =
+		match src with
+		| Ppm(ch) -> input_ppm ch
+		| Ppm_file(path) -> input_ppm (open_in path)
+		| Rotate(angle, src) -> rotate angle (load src)
+	in
+	Graphics.make_image (load src)
+
+(* Lazily loads an image *)
+let get src =
+	let cache = ref None in
+	fun () ->
+		match !cache with
+		| Some(img) -> img
+		| None ->
+			let img = load src in
+			cache := Some(img);
+			img

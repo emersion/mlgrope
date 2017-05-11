@@ -1,7 +1,7 @@
 OCAMLC ?= ocamlc
 CFLAGS = -thread
 CMAS = graphics.cma unix.cma threads.cma
-MODULES = util ppm math2d collide mlgrope backend frontend level player editor menu
+MODULES = util image math2d collide mlgrope backend frontend level player editor menu
 CMIS = $(MODULES:=.cmi)
 CMOS = $(MODULES:=.cmo) main.cmo
 

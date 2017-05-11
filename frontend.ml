@@ -2,7 +2,7 @@ open Graphics
 open Sys
 open Unix
 
-open Ppm
+open Image
 open Math2d
 open Mlgrope
 open Backend
@@ -37,25 +37,10 @@ let mix_color c1 c2 t =
 let mouse_of_status s =
 	{x = float_of_int s.mouse_x; y = float_of_int s.mouse_y}
 
-
-let load_image path =
-	Ppm.input (open_in path)
-
-(* Lazily loads an image *)
-let get_image path =
-	let cache = ref None in
-	fun () ->
-		match !cache with
-		| Some(img) -> img
-		| None ->
-			let img = load_image path in
-			cache := Some(img);
-			img
-
-let ball_img = get_image "img/ball.ppm"
-let goal_img = get_image "img/goal.ppm"
-let star_img = get_image "img/star.ppm"
-let spike_img = get_image "img/spike.ppm"
+let ball_img = Image.get (Image.Ppm_file "img/ball.ppm")
+let goal_img = Image.get (Image.Ppm_file "img/goal.ppm")
+let star_img = Image.get (Image.Ppm_file "img/star.ppm")
+let spike_img = Image.get (Image.Ppm_file "img/spike.ppm")
 
 
 let draw_bubble (b : bubble) =
