@@ -72,7 +72,7 @@ let panel_entities size =
 	let position = {x = size.x +. (panel_width /. 2.); y = 0.} in
 	let radius = 20. in
 	let l = [
-		Ball{position; speed = vec0; links = []};
+		Ball{position; speed = vec0; links = []; previous_links = []};
 		Bubble{position; radius};
 		Rope{position; radius; length = radius};
 		Elastic{position; radius; length = radius; stiffness = 1.};
@@ -301,6 +301,7 @@ let run size path =
 					position = 0.5 *: size;
 					speed = vec0;
 					links = [];
+					previous_links = [];
 				};
 			]
 	in

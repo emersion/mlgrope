@@ -75,15 +75,17 @@ let rec add_links_collision col links =
 	) links col
 
 (* Add links tant needs to be added according to entity list *)
-let add_links_entity pos entl links =
+let add_links_entity pos entl links prev_links =
 	List.fold_left (fun acc e ->
 		match e with
 		| Rope(r) ->
-			if squared_distance r.position pos <= r.radius**2. && (not (List.mem e acc))
+			if not (List.mem e prev_links) && not (List.mem e acc)
+				&& squared_distance r.position pos <= r.radius**2.
 			then e::acc
 			else acc
 		| Elastic(el) ->
-			if squared_distance el.position pos <= el.radius**2. && (not (List.mem e acc))
+			if not (List.mem e prev_links) && not (List.mem e acc)
+				&& squared_distance el.position pos <= el.radius**2.
 			then e::acc
 			else acc
 		| Fan(f) ->
@@ -99,7 +101,7 @@ let add_links_entity pos entl links =
 
 let add_links ball entl col =
 	let links = add_links_collision col ball.links in
-	add_links_entity ball.position entl links
+	add_links_entity ball.position entl links ball.previous_links
 
 (* ball pos, Link list : entity list -> Forces list : position list *)
 (* Collision response *)
@@ -186,6 +188,7 @@ let filter_self ball gs  =
 (* Compute new pos *)
 let ball_move ball gs dt gs' =
 	let gsNoBall = filter_self ball gs in
+	let previous_links = List.fold_left (fun acc e -> if List.mem e acc then acc else e::acc ) ball.previous_links ball.links in
 	let colList = List.filter (check_collision ball.position) gsNoBall in
 	let forceList = compute_forces ball.position ball.links in
 	let sumForces = sum_vec forceList in
@@ -193,7 +196,7 @@ let ball_move ball gs dt gs' =
 	let sumForces = compute_reaction ball.position sumForces colList links in
 	let speed = (apply_constraints ball sumForces colList links) +: dt *: sumForces in
 	let position = compute_position (ball.position +: dt *: speed) colList links in
-	let updated = {position; speed; links} in
+	let updated = {position; speed; links; previous_links} in
 	let gs' = clear_entities colList gs' in
 	List.map (swap_ball ball updated) gs'
 

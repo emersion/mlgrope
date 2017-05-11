@@ -32,7 +32,7 @@ let parse_color l : (Graphics.color * string list) =
 
 let parse_ball l : ball =
 	let (position, l) = parse_vec l in
-	{position; speed = vec0; links = []}
+	{position; speed = vec0; links = []; previous_links = [];}
 
 let parse_bubble l : bubble =
 	let (position, l) = parse_vec l in
