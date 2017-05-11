@@ -127,7 +127,11 @@ let output_fields ch l =
 	output_string ch (l^"\n")
 
 let cons_float f l =
-	(string_of_int (int_of_float f))::l
+	let s =
+		if mod_float f 1. = 0. then string_of_int (int_of_float f)
+		else string_of_float f
+	in
+	s::l
 
 let cons_vec v l =
 	cons_float v.x (cons_float v.y l)
