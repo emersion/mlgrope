@@ -83,19 +83,27 @@ let rainbow_colors = Array.of_list [Graphics.magenta; Graphics.blue; Graphics.cy
 (* Returns the color of a rainbow, for t in [0; 1] *)
 let rainbow t =
 	let n = Array.length rainbow_colors in
-	let a = t *. (float_of_int n) in
+	let a = mod_float (t *. (float_of_int n)) (float_of_int n) in
 	let i = int_of_float a in
 	let j = (i+1) mod n in
 	mix_color rainbow_colors.(j) rainbow_colors.(i) (a -. (float_of_int i))
 
 let draw_fan (f : fan) =
-	let a = f.position -: {x = 0.; y = f.size.y /. 2.} in
-	let (x, y) = ints_of_vec a in
-	let (w, h) = ints_of_vec f.size in
-	for i = x to x+w do
-		Graphics.set_color (rainbow (mod_float (abs_float ((float_of_int i -. 300.*.f.strength*.(Unix.gettimeofday ())) /. 500.)) 1.));
-		Graphics.moveto i y;
-		Graphics.lineto i (y+h)
+	let u = f.size.x *: vec_of_angle f.angle in
+	let v = f.size.y *: normalize (cross u) in
+	let corner = f.position -: 0.5 *: v in
+	let n = int_of_float f.size.x in
+	let time = Unix.gettimeofday () in
+	for i = 0 to n do
+		let t = (float_of_int i) /. (float_of_int n) in
+		let a = corner +: t *: u in
+		let b = a +: v in
+		let (x1, y1) = ints_of_vec a in
+		let (x2, y2) = ints_of_vec b in
+		let t' = mod_float (abs_float ((f.position.x +. (float_of_int i) -. 300.*.f.strength*.time) /. 500.)) 1. in
+		Graphics.set_color (rainbow t');
+		Graphics.moveto x1 y1;
+		Graphics.lineto x2 y2
 	done
 
 let draw_spike (s : spike) =

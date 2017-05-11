@@ -1,9 +1,5 @@
 open Util
 
-let is_between a b x =
-	(min a b) <= x && x <= (max a b)
-
-
 type vec = {
 	x : float;
 	y : float;
@@ -39,6 +35,9 @@ let ( *:) s v  =
 let dot v1 v2  =
 	v1.x *. v2.x +. v1.y *. v2.y
 
+let cross v =
+	{x = -. v.y; y = v.x}
+
 let squared_length v =
 	v.x**2. +. v.y**2.
 
@@ -48,6 +47,9 @@ let length v =
 let normalize v =
 	{x = v.x /. (length v); y  = v.y /. (length v)}
 
+let vec_of_angle a =
+	{x = cos a; y = sin a}
+
 let angle_of_vec v =
 	if v = vec0 then 0. else
 	let a = acos (dot {x = 1.; y = 0.} (normalize v)) in
@@ -55,6 +57,12 @@ let angle_of_vec v =
 
 let reflect vi normal =
 	vi -: (2. *. (dot vi normal) *: normal)
+
+let rotate a v =
+	{
+		x = v.x *. (cos a) +. v.y *. (sin a);
+		y = -. v.x *. (sin a) +. v.y *. (cos a);
+	}
 
 let fold_segments f acc l =
 	match l with

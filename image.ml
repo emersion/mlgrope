@@ -56,14 +56,14 @@ let mirror m =
 
 let rotate angle m =
 	(* TODO: support for images with w <> h *)
-	let pos = int_of_float (round_float (angle /. (0.5 *. pi))) in
+	let pos = int_of_float (round_float ((normalize_angle angle) /. (0.5 *. pi))) in
 	if pos = 0 then m else
 	let (h, w) = matrix_dim m in
 	let f = match pos with
 	| 1 -> (fun i j -> m.(j).(i))
 	| 2 -> (fun i j -> m.(h-i-1).(w-j-1))
 	| 3 -> (fun i j -> m.(w-j-1).(h-i-1))
-	| _ -> raise (Failure "Invalid angle")
+	| _ -> assert false
 	in
 	init_matrix h w f
 

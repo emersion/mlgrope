@@ -105,7 +105,7 @@ let radius_handle_position e =
 let size_handle_position e =
 	match e with
 	| Fan{position; size; angle} ->
-		position +: {size with y = -. size.y /. 2.}
+		position +: size.x *: (vec_of_angle angle) +: 0.5 *. size.y *: (vec_of_angle (angle -. 0.5 *. pi))
 	| _ -> raise Not_found
 
 let length_handle_position e =
@@ -116,8 +116,12 @@ let length_handle_position e =
 
 let angle_handle_position e =
 	match e with
+	| Fan{position; size; angle} ->
+		let r = 0.5 *. size.y in
+		let angle = angle -. 0.5 *. pi in
+		position +: r *: vec_of_angle angle
 	| Spike{position; angle} ->
-		position +: {x = spike_edge_size *. cos angle; y = spike_edge_size *. sin angle}
+		position +: spike_edge_size *: vec_of_angle angle
 	| _ -> raise Not_found
 
 let handle_position prop e =
@@ -165,7 +169,9 @@ let intersect_entity pt entity =
 		Collide.circle_point position radius pt
 	| Block{vertices} -> Collide.polygon_point vertices pt
 	| Fan{position; size; angle} ->
-		let a = position -: {x = 0.; y = size.y /. 2.} in
+		let pt = pt -: position in
+		let pt = rotate angle pt in
+		let a = vec0 -: {x = 0.; y = size.y /. 2.} in
 		let b = a +: size in
 		Collide.box_point a b pt
 	| Spike{position} ->
@@ -190,7 +196,7 @@ let rec intersect_entities pt state =
 			else
 				intersect_entities pt state
 	)
-	| _ -> None
+	| [] -> None
 
 let swap_entity entity updated =
 	fun e -> if e == entity then updated else e
@@ -211,16 +217,21 @@ let update_length entity position =
 	| _ -> entity
 
 let update_size entity position =
-	let delta = position -: (position_of_entity entity) in
-	let size = {x = abs_float delta.x; y = abs_float (2. *. delta.y)} in
+	(* let delta = position -: (position_of_entity entity) in
+	let size = {x = abs_float delta.x; y = abs_float (2. *. delta.y)} in *)
 	match entity with
-	| Fan(f) -> Fan{f with size}
+	| Fan(f) ->
+		let delta = position -: f.position in
+		let delta = rotate f.angle delta in
+		let size = {x = abs_float delta.x; y = abs_float (2. *. delta.y)} in
+		Fan{f with size}
 	| _ -> entity
 
 let update_angle entity position =
 	let delta = position -: (position_of_entity entity) in
 	let angle = angle_of_vec delta in
 	match entity with
+	| Fan(f) -> Fan{f with angle = normalize_angle (angle +. 0.5 *. pi)}
 	| Spike(s) ->
 		let angle = 0.5 *. pi *. (round_float (angle /. (0.5 *. pi))) in
 		Spike{s with angle}
