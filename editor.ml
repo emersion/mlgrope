@@ -146,14 +146,19 @@ let handle_position prop e =
 	| Strength -> strength_handle_position e
 	| _ -> raise Not_found
 
+let draw_handle prop e =
+	let (x, y) = ints_of_vec (handle_position prop e) in
+	let hs = int_of_float handle_size in
+	Graphics.set_color handle_color;
+	match prop with
+	| Angle ->
+		Graphics.fill_circle x y (hs/2)
+	| _ ->
+		Graphics.fill_rect (x - hs/2) (y - hs/2) hs hs
+
 let draw_handles e =
 	List.iter (fun prop ->
-		try
-			let (x, y) = ints_of_vec (handle_position prop e) in
-			let hs = int_of_float handle_size in
-			Graphics.set_color handle_color;
-			Graphics.fill_rect (x - hs/2) (y - hs/2) hs hs
-		with Not_found -> ()
+		try draw_handle prop e with Not_found -> ()
 	) handle_props
 
 let draw_entity e =
