@@ -4,9 +4,6 @@ open Mlgrope
 exception TouchedGoalException of vec
 exception DestroyBallException
 
-let print_forces l =
-	List.iter (fun v -> Printf.printf "%f %f #\n%!" v.x v.y) l
-
 let gravity = { x = 0.; y = -150. }
 
 (* vecteur de norme 1 dans la direction v1v2 *)
@@ -24,26 +21,31 @@ let spike_vertices (s : spike) =
 	let agl = s.angle in
 	let s3 = sqrt 3. in
 	let radius = Mlgrope.spike_edge_size *. s3 /. 4. in
-	[v+: {x =  radius *. cos agl; y = radius *. sin agl};
-	 v+: {x =  radius *. cos (agl +. 2.*.Util.pi /. 3.); y = radius *. sin (agl +. 2.*.Util.pi /. 3.)};
-	 v+: {x =  radius *. cos (agl +. 4.*.Util.pi /. 3.); y = radius *. sin (agl +. 4.*.Util.pi /. 3.)}]
+	[
+		v+: {x =  radius *. cos agl; y = radius *. sin agl};
+		v+: {x =  radius *. cos (agl +. 2.*.Util.pi /. 3.); y = radius *. sin (agl +. 2.*.Util.pi /. 3.)};
+		v+: {x =  radius *. cos (agl +. 4.*.Util.pi /. 3.); y = radius *. sin (agl +. 4.*.Util.pi /. 3.)};
+	]
 
 let elastic_force d (e : elastic) =
 	(d/.250. *. e.stiffness)**2.0
 
-let remove_from_list o l = List.filter (fun e -> o != e) l
+let remove_from_list o l =
+	List.filter (fun e -> o != e) l
 
-let find_bubble l = List.exists (fun e -> match e with | Bubble(_) -> true	| _ -> false) l
+let find_bubble l =
+	List.exists (fun e -> match e with | Bubble(_) -> true | _ -> false) l
 
-let find_rope l = List.exists (fun e -> match e with | Rope(_) -> true	| _ -> false) l
+let find_rope l =
+	List.exists (fun e -> match e with | Rope(_) -> true | _ -> false) l
 
 let clear_entities col entl =
 	List.fold_left (fun acc e ->
 		match e with
 		| Bubble(_) | Star(_) ->
-			if (List.mem e col) then acc else e::acc
+			if List.mem e col then acc else e::acc
 		| _ -> e::acc
-		) [] entl
+	) [] entl
 
 let update_previous_links links prev_links =
 	let prev_links = List.filter (fun e ->
@@ -51,8 +53,9 @@ let update_previous_links links prev_links =
 		| Fan(_) -> false
 		| _ -> true
 	) prev_links in
-	List.fold_left (fun acc e -> if List.mem e acc then acc else e::acc )
-	prev_links links
+	List.fold_left (fun acc e ->
+		if List.mem e acc then acc else e::acc
+	) prev_links links
 
 let check_collision pos ent =
 	let sqdRadius = Mlgrope.ball_radius *. Mlgrope.ball_radius in
@@ -107,7 +110,7 @@ let add_links_entity pos entl links prev_links =
 				else acc
 			| _ -> acc
 		else acc
-	)	links entl
+	) links entl
 
 let clear_links links =
 	List.filter (fun e ->
@@ -135,7 +138,8 @@ let compute_forces pos linkList =
 			else acc
 		| Fan(f) -> ((200. *. f.strength ) *: {x = cos f.angle; y = sin f.angle}::(fst acc), snd acc)
 		| _ -> acc
-		) ([],false) linkList in
+	) ([],false) linkList
+	in
 	if isBubble then forceList else gravity::forceList
 
 (* Collsion response -> forces (reaction) *)
@@ -180,27 +184,27 @@ let rec apply_constraints b sumForces colList linkList =
 (* Collsion response -> position *)
 let compute_position pos colList linkList =
 	List.fold_left (fun acc e ->
-			match e with
-			| Ball(b) -> pos
-			| Rope(r) ->
-				if List.mem e linkList && distance pos r.position >= r.length
-				then r.length *: (direction r.position pos) +: r.position
-				else pos
-			| Block(bl) -> let l = Collide.polygon_circle bl.vertices pos Mlgrope.ball_radius in
-				List.fold_left (fun acc (a,b) ->
-					let n  = Collide.circle_seg_norm a b pos in
-					acc +: (Mlgrope.ball_radius *: n)
-				) pos l
-			| _ -> pos
+		match e with
+		| Ball(b) -> pos
+		| Rope(r) ->
+			if List.mem e linkList && distance pos r.position >= r.length
+			then r.length *: (direction r.position pos) +: r.position
+			else pos
+		| Block(bl) -> let l = Collide.polygon_circle bl.vertices pos Mlgrope.ball_radius in
+			List.fold_left (fun acc (a,b) ->
+				let n  = Collide.circle_seg_norm a b pos in
+				acc +: (Mlgrope.ball_radius *: n)
+			) pos l
+		| _ -> pos
 	) pos colList
 
 let sum_vec l =
-	List.fold_left (+:) { x = 0.; y = 0. } l
+	List.fold_left (+:) vec0 l
 
 let filter_self ball gs  =
 	List.filter (fun e ->
 		match e with
-		| Ball(b) -> not (ball = b)
+		| Ball(b) -> ball != b
 		| _ -> true
 	) gs
 
