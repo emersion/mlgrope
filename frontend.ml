@@ -51,6 +51,9 @@ let draw_bubble (b : bubble) =
 	Graphics.set_color bubble_color;
 	Graphics.draw_circle x y (int_of_float b.radius)
 
+let draw_magnet (m : magnet) =
+	() (* TODO *)
+
 let draw_rope (r : rope) =
 	let (x, y) = ints_of_vec r.position in
 	Graphics.set_color rope_color;
@@ -185,6 +188,7 @@ let draw_entity e =
 	match e with
 	| Ball(b) -> draw_ball b
 	| Bubble(b) -> draw_bubble b
+	| Magnet(m) -> draw_magnet m
 	| Rope(r) -> draw_rope r
 	| Elastic(e) -> draw_elastic e
 	| Goal(g) -> draw_goal g
