@@ -51,6 +51,7 @@ type ball = {
 	position : vec;
 	speed : vec;
 	links : entity list;
+	previous_links : entity list;
 }
 
 and entity =
