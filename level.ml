@@ -55,8 +55,8 @@ let parse_elastic l : elastic =
 	let (position, l) = parse_vec l in
 	let (radius, l) = parse_float l in
 	let (length, _) = parse_float l in
-	let (stiffness, _) = parse_float l in
-	{position; radius; length; stiffness}
+	let (strength, _) = parse_float l in
+	{position; radius; length; strength}
 
 let parse_goal l : goal =
 	let (position, l) = parse_vec l in
@@ -152,7 +152,7 @@ let fields_of_rope (r : rope) =
 	cons_vec r.position (cons_float r.radius (cons_float r.length []))
 
 let fields_of_elastic (e : elastic) =
-	cons_vec e.position (cons_float e.radius (cons_float e.length (cons_float e.stiffness [])))
+	cons_vec e.position (cons_float e.radius (cons_float e.length (cons_float e.strength [])))
 
 let fields_of_goal (g : goal) =
 	cons_vec g.position []

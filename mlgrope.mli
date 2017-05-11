@@ -23,7 +23,7 @@ type elastic = {
 	position : vec;
 	radius : float;
 	length : float;
-	stiffness : float;
+	strength : float;
 }
 
 type goal = {
