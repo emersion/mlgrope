@@ -18,7 +18,7 @@ type entity_property =
 	| Size
 	| Length
 	| Angle
-	| Strength (* TODO *)
+	| Strength
 	| Vertex of vec (* TODO *)
 
 type editor = {
@@ -37,7 +37,9 @@ let grid_color = Graphics.rgb 230 230 230
 let handle_size = 10.
 let handle_color = Graphics.black
 
-let handle_props = [Radius; Size; Length; Angle]
+let handle_props = [Radius; Size; Length; Angle; Strength]
+
+let strength_per_division = 50.
 
 let update_position entity position =
 	match entity with
@@ -127,12 +129,21 @@ let angle_handle_position e =
 		position +: spike_edge_size *: vec_of_angle angle
 	| _ -> raise Not_found
 
+let strength_handle_position e =
+	match e with
+	| Magnet{position; strength} ->
+		position +: {x = strength *. strength_per_division; y = 0.}
+	| Fan{position; angle; strength} ->
+		position +: strength *. strength_per_division *: vec_of_angle angle
+	| _ -> raise Not_found
+
 let handle_position prop e =
 	match prop with
 	| Radius -> radius_handle_position e
 	| Size -> size_handle_position e
 	| Length -> length_handle_position e
 	| Angle -> angle_handle_position e
+	| Strength -> strength_handle_position e
 	| _ -> raise Not_found
 
 let draw_handles e =
@@ -242,6 +253,15 @@ let update_angle entity position =
 		Spike{s with angle}
 	| _ -> entity
 
+let update_strength entity position =
+	let ep = position_of_entity entity in
+	let d = distance ep position in
+	let strength = copysign (d /. strength_per_division) (position.x -. ep.x) in
+	match entity with
+	| Magnet(m) -> Magnet{m with strength}
+	| Fan(f) -> Fan{f with strength}
+	| _ -> entity
+
 let update ed entity prop position =
 	let ed = {ed with selected_property = prop} in
 	let updated = match prop with
@@ -250,6 +270,7 @@ let update ed entity prop position =
 	| Length -> update_length entity position
 	| Size -> update_size entity position
 	| Angle -> update_angle entity position
+	| Strength -> update_strength entity position
 	| _ -> entity
 	in
 	let state = List.map (swap_entity entity updated) ed.state in
