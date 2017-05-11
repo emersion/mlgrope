@@ -75,6 +75,7 @@ let panel_entities size =
 	let l = [
 		Ball{position; speed = vec0; links = []; previous_links = []};
 		Bubble{position; radius};
+		Magnet{position; radius; strength = 1.};
 		Rope{position; radius; length = radius};
 		Elastic{position; radius; length = radius; stiffness = 1.};
 		Goal{position};
@@ -99,7 +100,8 @@ let draw_panel size =
 
 let radius_handle_position e =
 	match e with
-	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
+	| Bubble{position; radius} | Magnet{position; radius} | Rope{position; radius}
+	| Elastic{position; radius} ->
 		position +: {x = radius; y = 0.} (* TODO: draw handle in a corner *)
 	| _ -> raise Not_found
 
@@ -207,6 +209,7 @@ let update_radius entity position =
 	let radius = distance (position_of_entity entity) position in
 	match entity with
 	| Bubble(b) -> Bubble{b with radius}
+	| Magnet(m) -> Magnet{m with radius}
 	| Rope(r) -> Rope{r with radius}
 	| Elastic(e) -> Elastic{e with radius}
 	| _ -> entity

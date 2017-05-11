@@ -11,10 +11,12 @@ open Backend
 let tick_rate = 1. /. 60.
 
 let bubble_color = Graphics.red
+let magnet_color = Graphics.magenta
 let rope_color = Graphics.green
 let elastic_color = Graphics.blue
 
 let rope_inner_radius = 5.
+let magnet_size = {x = 40.; y = 40.}
 let goal_size = {x = 75.; y = 40.}
 let star_size = {x = 40.; y = 40.}
 
@@ -33,6 +35,7 @@ let mouse_of_status s =
 	{x = float_of_int s.mouse_x; y = float_of_int s.mouse_y}
 
 let ball_img = Image.get (Image.Ppm_file "img/ball.ppm")
+let magnet_img = Image.get (Image.Ppm_file "img/magnet.ppm")
 let goal_img = Image.get (Image.Ppm_file "img/goal.ppm")
 let star_img = Image.get (Image.Ppm_file "img/star.ppm")
 let spike_up_img = Image.get (Image.Ppm_file "img/spike.ppm")
@@ -46,7 +49,13 @@ let draw_bubble (b : bubble) =
 	Graphics.draw_circle x y (int_of_float b.radius)
 
 let draw_magnet (m : magnet) =
-	() (* TODO *)
+	let (corner, _) = ends_of_box m.position magnet_size in
+	let (x, y) = ints_of_vec corner in
+	Graphics.draw_image (magnet_img ()) x y;
+
+	let (x, y) = ints_of_vec m.position in
+	Graphics.set_color magnet_color;
+	Graphics.draw_circle x y (int_of_float m.radius)
 
 let draw_rope (r : rope) =
 	let (x, y) = ints_of_vec r.position in
