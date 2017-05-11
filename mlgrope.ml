@@ -7,6 +7,12 @@ type bubble = {
 	radius : float;
 }
 
+type magnet = {
+	position : vec;
+	radius : float;
+	strength : float;
+}
+
 type rope = {
 	position : vec;
 	radius : float;
@@ -57,6 +63,7 @@ type ball = {
 and entity =
 	| Ball of ball
 	| Bubble of bubble
+	| Magnet of magnet
 	| Rope of rope
 	| Goal of goal
 	| Elastic of elastic
@@ -72,7 +79,8 @@ let ball_radius = 20.0
 let position_of_entity e =
 	match e with
 	| Ball{position} | Bubble{position} | Rope{position} | Goal{position}
-	| Elastic{position} | Star{position} | Fan{position} | Spike{position} ->
+	| Elastic{position} | Star{position} | Fan{position} | Spike{position}
+	| Magnet{position} ->
 		position
 	| Block{vertices} -> average vertices
 

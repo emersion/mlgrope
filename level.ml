@@ -39,6 +39,12 @@ let parse_bubble l : bubble =
 	let (radius, _) = parse_float l in
 	{position; radius}
 
+let parse_magnet l : magnet =
+	let (position, l) = parse_vec l in
+	let (radius,_) = parse_float l in
+	let (strength,_) = parse_float l in
+	{position; radius; strength}
+
 let parse_rope l : rope =
 	let (position, l) = parse_vec l in
 	let (radius, l) = parse_float l in
@@ -81,6 +87,7 @@ let parse_entity t l =
 	match t with
 	| "ball" -> Ball(parse_ball l)
 	| "bubble" -> Bubble(parse_bubble l)
+	| "magnet" -> Magnet(parse_magnet l)
 	| "rope" -> Rope(parse_rope l)
 	| "elastic" -> Elastic(parse_elastic l)
 	| "goal" -> Goal(parse_goal l)
@@ -134,6 +141,9 @@ let fields_of_ball (b : ball) =
 let fields_of_bubble (b : bubble) =
 	cons_vec b.position (cons_float b.radius [])
 
+let fields_of_magnet (m : magnet) =
+	cons_vec m.position (cons_float m.radius (cons_float m.strength []))
+
 let fields_of_rope (r : rope) =
 	cons_vec r.position (cons_float r.radius (cons_float r.length []))
 
@@ -159,6 +169,7 @@ let fields_of_entity e =
 	match e with
 	| Ball(b) -> "ball"::(fields_of_ball b)
 	| Bubble(b) -> "bubble"::(fields_of_bubble b)
+	| Magnet(m) -> "magnet"::(fields_of_magnet m)
 	| Rope(r) -> "rope"::(fields_of_rope r)
 	| Elastic(e) -> "elastic"::(fields_of_elastic e)
 	| Goal(g) -> "goal"::(fields_of_goal g)
