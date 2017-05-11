@@ -81,3 +81,6 @@ let ends_of_box center size =
 	let a = center -: 0.5 *: size in
 	let b = a +: size in
 	(a, b)
+
+let mix_vec v1 v2 t =
+	{ x = mix v1.x v2.x t; y = mix v1.y v2.y t }

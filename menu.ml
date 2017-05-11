@@ -2,6 +2,7 @@ open String
 open Sys
 open Graphics
 
+open Util
 open Image
 open Math2d
 open Collide
@@ -25,6 +26,8 @@ let levels_ext = ".csv"
 let arrow_right_img = Image.get (Image.Ppm_file "img/arrow-right.ppm")
 let arrow_left_img = Image.get (Image.Mirror (Image.Ppm_file "img/arrow-right.ppm"))
 let arrow_size = {x = 132.; y = 165.}
+
+let sunglasses_img = Image.get (Image.Ppm_file "img/sunglasses.ppm")
 
 (* Removes suffix from s, if present *)
 let strip_suffix suffix s =
@@ -51,6 +54,12 @@ let draw_level size name state =
 	Graphics.set_color Graphics.black;
 	Graphics.moveto 0 0;
 	Graphics.draw_string ("Level "^name)
+
+let draw_sunglasses size pos1 t =
+	let pos0 = {pos1 with y = size.y} in
+	let corner = (mix_vec pos1 pos0 t) -: ball_radius *: vec1 in
+	let (x, y) = ints_of_vec corner in
+	Graphics.draw_image (sunglasses_img ()) x y
 
 let step m =
 	draw_level m.size m.levels.(m.selected_index) m.selected_level;
@@ -90,6 +99,21 @@ let run size =
 	if Array.length levels = 0 then raise (Failure "No level available") else
 
 	let m = {size; levels; selected_index = 0; selected_level = load_level levels.(0)} in
-	try
-		Frontend.run step handle_event size m
-	with SelectLevel(state) -> Player.run size state
+	try Frontend.run step handle_event size m with
+	| SelectLevel(state) -> (
+		try Player.run size state with
+		| Player.TouchedGoalException(state, pos) ->
+			let t0 = get_time () in
+			let step () =
+				let dt = (get_time ()) -. t0 in
+				let t = min (dt /. 1.) 1. in
+				Frontend.draw state;
+				draw_sunglasses m.size pos t
+			in
+			let handle_event () s s' =
+				match s' with
+				| {button = true} -> raise (Player.TouchedGoalException (state, pos))
+			in
+			Frontend.run step handle_event size ()
+		| Player.OutOfBoundsException(state) -> raise (Player.OutOfBoundsException state)
+	)

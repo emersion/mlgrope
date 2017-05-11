@@ -1,7 +1,7 @@
 open Math2d
 open Mlgrope
 
-exception TouchedGoalException
+exception TouchedGoalException of vec
 exception DestroyBallException
 
 let print_forces l =
@@ -60,7 +60,7 @@ let check_collision pos ent =
 	| Ball(b) -> let d = squared_distance b.position pos in
 		(Mlgrope.ball_radius*.2.) *. (Mlgrope.ball_radius*.2.) >= d
 	| Goal(g) -> let d = squared_distance g.position pos in
-		if sqdRadius >= d then raise TouchedGoalException else false
+		if sqdRadius >= d then raise (TouchedGoalException pos) else false
 	| Star(s) -> let d = squared_distance s.position pos in
 		sqdRadius >= d
 	| Bubble(bu) ->	let d = squared_distance bu.position pos in

@@ -18,12 +18,6 @@ let rope_inner_radius = 5.
 let goal_size = {x = 75.; y = 40.}
 let star_size = {x = 40.; y = 40.}
 
-let mix a b t =
-	t *. a +. (1. -. t) *. b
-
-let mix_vec v1 v2 t =
-	{ x = mix v1.x v2.x t; y = mix v1.y v2.y t }
-
 let mix_int i1 i2 t =
 	int_of_float (mix (float_of_int i1) (float_of_int i2) t)
 
@@ -96,7 +90,7 @@ let draw_fan (f : fan) =
 	let v = f.size.y *: normalize (cross u) in
 	let corner = f.position -: 0.5 *: v in
 	let n = int_of_float f.size.x in
-	let time = Unix.gettimeofday () in
+	let time = get_time () in
 	for i = 0 to n do
 		let t = (float_of_int i) /. (float_of_int n) in
 		let a = corner +: t *: u in

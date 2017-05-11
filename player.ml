@@ -7,7 +7,8 @@ open Mlgrope
 open Backend
 open Frontend
 
-exception OutOfBoundsException
+exception TouchedGoalException of game_state * vec
+exception OutOfBoundsException of game_state
 
 type game = {
 	size : vec;
@@ -68,9 +69,13 @@ let compute_score gs =
 	) 0 gs
 
 let step g =
-	let t = Unix.gettimeofday () in
+	let t = get_time () in
 	let dt = t -. g.time in
-	let state = if g.paused then g.state else Backend.move g.state dt in
+	let state = if g.paused then g.state else (
+		try
+			Backend.move g.state dt
+		with Backend.TouchedGoalException(pos) -> raise (TouchedGoalException (g.state, pos))
+	) in
 	let (state, in_bounds) = List.fold_left (fun (l, n) e ->
 		match e with
 		| Ball(b) ->
@@ -80,7 +85,7 @@ let step g =
 				(l, n)
 		| _ -> (e::l, n)
 	) ([], 0) state in
-	if in_bounds = 0 then raise OutOfBoundsException else
+	if in_bounds = 0 then raise (OutOfBoundsException state) else
 	let g = {g with time = t; state} in
 	let score = compute_score g.state in
 	Frontend.draw g.state;
@@ -118,7 +123,7 @@ let handle_event g s s' =
 let run size state =
 	let g = {
 		size;
-		time = Unix.gettimeofday ();
+		time = get_time ();
 		paused = false;
 		state;
 	} in

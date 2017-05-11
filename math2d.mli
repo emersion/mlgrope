@@ -26,3 +26,4 @@ val rotate : float -> vec -> vec
 val fold_segments : ('a -> (vec * vec) -> 'a) -> 'a -> vec list -> 'a
 val average : vec list -> vec
 val ends_of_box : vec -> vec -> (vec * vec)
+val mix_vec : vec -> vec -> float -> vec
