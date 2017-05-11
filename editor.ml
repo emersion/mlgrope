@@ -43,6 +43,7 @@ let update_position entity position =
 	match entity with
 	| Ball(b) -> Ball{b with position}
 	| Bubble(b) -> Bubble{b with position}
+	| Magnet(m) -> Magnet{m with position}
 	| Rope(b) -> Rope{b with position}
 	| Elastic(b) -> Elastic{b with position}
 	| Goal(b) -> Goal{position}
@@ -165,7 +166,8 @@ let intersect_entity pt entity =
 	| Star{position} ->
 		let (a, b) = ends_of_box position star_size in
 		Collide.box_point a b pt
-	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius} ->
+	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius}
+	| Magnet{position; radius} ->
 		Collide.circle_point position radius pt
 	| Block{vertices} -> Collide.polygon_point vertices pt
 	| Fan{position; size; angle} ->

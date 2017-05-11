@@ -7,6 +7,12 @@ type bubble = {
 	radius : float;
 }
 
+type magnet = {
+	position : vec;
+	radius : float;
+	strength : float;
+}
+
 type rope = {
 	position : vec;
 	radius : float;
@@ -56,6 +62,7 @@ type ball = {
 and entity =
 	| Ball of ball
 	| Bubble of bubble
+	| Magnet of magnet
 	| Rope of rope
 	| Goal of goal
 	| Elastic of elastic
