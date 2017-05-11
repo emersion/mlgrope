@@ -112,7 +112,7 @@ let add_links_entity pos entl links prev_links =
 let clear_links links =
 	List.filter (fun e ->
 		match e with
-		| Fan(_) -> false
+		| Fan(_) | Magnet(_) -> false
 		| _ -> true
 	) links
 
@@ -123,11 +123,12 @@ let update_links ball entl col =
 
 (* Link response -> force *)
 let compute_forces pos linkList =
-	let (linkList,isBubble) = List.fold_left (fun acc e ->
+	let (forceList,isBubble) = List.fold_left (fun acc e ->
 		match e with
 		| Bubble(bu) -> ({gravity with y = 0.5 *. abs_float gravity.y}::(fst acc), true)
-		| Magnet(m) -> let d   = squared_distance m.position pos in
-			((m.strength /. d) *: direction pos m.position ::(fst acc), snd acc)
+		| Magnet(m) -> let d = squared_distance m.position pos in
+			let d  = max 10. (abs_float d) in
+			((200. *. m.radius *. m.radius /. d) *: direction pos m.position ::(fst acc), snd acc)
 		| Elastic(e) -> let d = distance pos e.position in
 			if d >= e.length
 			then ((elastic_force d e) *: direction pos e.position ::(fst acc), snd acc)
@@ -135,7 +136,7 @@ let compute_forces pos linkList =
 		| Fan(f) -> ((200. *. f.strength ) *: {x = cos f.angle; y = sin f.angle}::(fst acc), snd acc)
 		| _ -> acc
 		) ([],false) linkList in
-	if isBubble then linkList else gravity::linkList
+	if isBubble then forceList else gravity::forceList
 
 (* Collsion response -> forces (reaction) *)
 let compute_reaction pos sumForces colList linkList =
