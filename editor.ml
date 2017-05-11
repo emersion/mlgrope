@@ -11,6 +11,22 @@ open Player
 
 exception Play of game_state
 
+type entity_property =
+	| Position
+	| Radius
+	| Size
+	| Length
+	| Angle
+	| Strength (* TODO *)
+	| Vertex of vec (* TODO *)
+
+type editor = {
+	size : vec;
+	state: game_state;
+	selected : entity option;
+	selected_property : entity_property;
+}
+
 let panel_width = 200.
 let panel_color = Graphics.rgb 127 127 127
 
@@ -20,19 +36,7 @@ let grid_color = Graphics.rgb 230 230 230
 let handle_size = 10.
 let handle_color = Graphics.black
 
-type entity_property =
-	| Position
-	| Radius
-	| Size
-	| Length
-	| Vertex of vec (* TODO *)
-
-type editor = {
-	size : vec;
-	state: game_state;
-	selected : entity option;
-	selected_property : entity_property;
-}
+let handle_props = [Radius; Size; Length; Angle]
 
 let update_position entity position =
 	match entity with
@@ -109,11 +113,18 @@ let length_handle_position e =
 		position +: {x = length; y = 0.} (* TODO: draw handle in a corner *)
 	| _ -> raise Not_found
 
+let angle_handle_position e =
+	match e with
+	| Spike{position; angle} ->
+		position +: {x = spike_edge_size *. cos angle; y = spike_edge_size *. sin angle}
+	| _ -> raise Not_found
+
 let handle_position prop e =
 	match prop with
 	| Radius -> radius_handle_position e
 	| Size -> size_handle_position e
 	| Length -> length_handle_position e
+	| Angle -> angle_handle_position e
 	| _ -> raise Not_found
 
 let draw_handles e =
@@ -124,7 +135,7 @@ let draw_handles e =
 			Graphics.set_color handle_color;
 			Graphics.fill_rect (x - hs/2) (y - hs/2) hs hs
 		with Not_found -> ()
-	) [Radius; Size; Length]
+	) handle_props
 
 let draw_entity e =
 	Frontend.draw_entity e;
@@ -164,7 +175,7 @@ let intersect_handles pt e =
 		try
 			Collide.circle_point (handle_position prop e) (handle_size /. 2.) pt
 		with Not_found -> false
-	) [Radius; Size; Length]
+	) handle_props
 
 let rec intersect_entities pt state =
 	match state with
@@ -205,6 +216,13 @@ let update_size entity position =
 	| Fan(f) -> Fan{f with size}
 	| _ -> entity
 
+let update_angle entity position =
+	let delta = position -: (position_of_entity entity) in
+	let angle = angle_of_vec delta in
+	match entity with
+	| Spike(s) -> Spike{s with angle}
+	| _ -> entity
+
 let update ed entity prop position =
 	let ed = {ed with selected_property = prop} in
 	let updated = match prop with
@@ -212,6 +230,7 @@ let update ed entity prop position =
 	| Radius -> update_radius entity position
 	| Length -> update_length entity position
 	| Size -> update_size entity position
+	| Angle -> update_angle entity position
 	| _ -> entity
 	in
 	let state = List.map (swap_entity entity updated) ed.state in
