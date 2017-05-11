@@ -113,6 +113,8 @@ let run size =
 			let handle_event () s s' =
 				match s' with
 				| {button = true} -> raise (Player.TouchedGoalException (state, pos))
+				| {keypressed = true; key = '\027'} -> raise Exit
+				| _ -> ()
 			in
 			Frontend.run step handle_event size ()
 		| Player.OutOfBoundsException(state) -> raise (Player.OutOfBoundsException state)
