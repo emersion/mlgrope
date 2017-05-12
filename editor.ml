@@ -37,8 +37,6 @@ let grid_color = Graphics.rgb 230 230 230
 let handle_size = 10.
 let handle_color = Graphics.black
 
-let handle_props = [Radius; Size; Length; Angle; Strength]
-
 let strength_per_division = 50.
 
 let update_position entity position =
@@ -137,6 +135,11 @@ let strength_handle_position e =
 		position +: strength *. strength_per_division *: vec_of_angle angle
 	| _ -> raise Not_found
 
+let vertex_handle_position v e =
+	match e with
+	| Block(_) -> v
+	| _ -> raise Not_found
+
 let handle_position prop e =
 	match prop with
 	| Radius -> radius_handle_position e
@@ -144,6 +147,7 @@ let handle_position prop e =
 	| Length -> length_handle_position e
 	| Angle -> angle_handle_position e
 	| Strength -> strength_handle_position e
+	| Vertex(v) -> vertex_handle_position v e
 	| _ -> raise Not_found
 
 let draw_handle prop e =
@@ -164,10 +168,25 @@ let draw_handle prop e =
 	| _ ->
 		Graphics.fill_rect (x - hs/2) (y - hs/2) hs hs
 
+let handles_of_entity e =
+	match e with
+	| Ball(_) -> []
+	| Bubble(_) -> [Radius]
+	| Magnet(_) -> [Radius; Strength]
+	| Rope(_) -> [Radius; Length]
+	| Elastic(_) -> [Radius; Length; Strength]
+	| Block{vertices} ->
+		List.fold_left (fun props v ->
+			(Vertex v)::props
+		) [] vertices
+	| Spike(_) -> [Angle]
+	| Fan(_) -> [Size; Angle; Strength]
+	| Goal(_) | Star(_) -> []
+
 let draw_handles e =
 	List.iter (fun prop ->
 		try draw_handle prop e with Not_found -> ()
-	) handle_props
+	) (handles_of_entity e)
 
 let draw_entity e =
 	Frontend.draw_entity e;
@@ -210,7 +229,7 @@ let intersect_handles pt e =
 		try
 			Collide.circle_point (handle_position prop e) (handle_size /. 2.) pt
 		with Not_found -> false
-	) handle_props
+	) (handles_of_entity e)
 
 let rec intersect_entities pt state =
 	match state with
@@ -275,19 +294,28 @@ let update_strength entity position =
 	| Fan(f) -> Fan{f with strength}
 	| _ -> entity
 
+let update_vertex entity vertex position =
+	match entity with
+	| Block(b) ->
+		let vertices = List.map (fun v ->
+			if v == vertex then position else v
+		) b.vertices in
+		Block{b with vertices}
+	| _ -> entity
+
 let update ed entity prop position =
 	let ed = {ed with selected_property = prop} in
-	let updated = match prop with
-	| Position -> update_position entity position
-	| Radius -> update_radius entity position
-	| Length -> update_length entity position
-	| Size -> update_size entity position
-	| Angle -> update_angle entity position
-	| Strength -> update_strength entity position
-	| _ -> entity
+	let (updated, selected_property) = match prop with
+	| Position -> (update_position entity position, prop)
+	| Radius -> (update_radius entity position, prop)
+	| Length -> (update_length entity position, prop)
+	| Size -> (update_size entity position, prop)
+	| Angle -> (update_angle entity position, prop)
+	| Strength -> (update_strength entity position, prop)
+	| Vertex(v) -> (update_vertex entity v position, Vertex(position))
 	in
 	let state = List.map (swap_entity entity updated) ed.state in
-	{ed with state; selected = Some(updated)}
+	{ed with state; selected = Some(updated); selected_property}
 
 let remove ed entity =
 	let state = List.filter (fun e -> e != entity) ed.state in
