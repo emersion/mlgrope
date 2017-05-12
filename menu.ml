@@ -92,7 +92,7 @@ let handle_event m s s' =
 	| {keypressed = true; key = '\027'} -> raise Exit
 	| _ -> m
 
-let run size =
+let rec run size =
 	let files = Sys.readdir levels_dir in
 	let levels = Array.map (strip_suffix levels_ext) files in
 	Array.sort String.compare levels;
@@ -112,10 +112,10 @@ let run size =
 			in
 			let handle_event () s s' =
 				match s' with
-				| {button = true} -> raise (Player.TouchedGoalException (state, pos))
+				| {button = true} -> run size
 				| {keypressed = true; key = '\027'} -> raise Exit
 				| _ -> ()
 			in
 			Frontend.run step handle_event size ()
-		| Player.OutOfBoundsException(state) -> raise (Player.OutOfBoundsException state)
+		| Player.OutOfBoundsException(state) -> run size
 	)
