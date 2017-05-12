@@ -138,7 +138,7 @@ let angle_handle_position e =
 
 let strength_handle_position e =
 	match e with
-	| Magnet{position; strength} ->
+	| Magnet{position; strength} | Elastic{position; strength} ->
 		position +: {x = strength *. strength_per_division; y = 0.}
 	| Fan{position; angle; strength} ->
 		position +: strength *. strength_per_division *: vec_of_angle angle
@@ -193,9 +193,7 @@ let handles_of_entity e =
 	| Goal(_) | Star(_) -> []
 
 let draw_handles e =
-	List.iter (fun prop ->
-		try draw_handle prop e with Not_found -> ()
-	) (handles_of_entity e)
+	List.iter (fun prop -> draw_handle prop e) (handles_of_entity e)
 
 let draw_entity e =
 	Frontend.draw_entity e;
@@ -235,9 +233,7 @@ let intersect_entity pt entity =
 
 let intersect_handles pt e =
 	List.find (fun prop ->
-		try
-			Collide.circle_point (handle_position prop e) (handle_size /. 2.) pt
-		with Not_found -> false
+		Collide.circle_point (handle_position prop e) (handle_size /. 2.) pt
 	) (handles_of_entity e)
 
 let rec intersect_entities pt state =
@@ -300,6 +296,7 @@ let update_strength entity position =
 	let strength = copysign (d /. strength_per_division) (position.x -. ep.x) in
 	match entity with
 	| Magnet(m) -> Magnet{m with strength}
+	| Elastic(e) -> Elastic{e with strength}
 	| Fan(f) -> Fan{f with strength}
 	| _ -> entity
 
