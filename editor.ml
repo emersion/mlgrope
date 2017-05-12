@@ -13,7 +13,7 @@ open Player
 exception Play of game_state
 
 type entity_property =
-	| Position
+	| Position of vec
 	| Radius
 	| Size
 	| Length
@@ -248,7 +248,7 @@ let rec intersect_entities pt state =
 			Some(e, prop)
 		with Not_found ->
 			if intersect_entity pt e then
-				Some(e, Position)
+				Some(e, Position (pt -: position_of_entity e))
 			else
 				intersect_entities pt state
 	)
@@ -315,7 +315,7 @@ let update_vertex entity vertex position =
 let update ed entity prop position =
 	let ed = {ed with selected_property = prop} in
 	let (updated, selected_property) = match prop with
-	| Position -> (update_position entity position, prop)
+	| Position(delta) -> (update_position entity (position -: delta), prop)
 	| Radius -> (update_radius entity position, prop)
 	| Length -> (update_length entity position, prop)
 	| Size -> (update_size entity position, prop)
@@ -341,14 +341,7 @@ let handle_event path ed s s' =
 	| ({button = false}, {button = true}) -> (
 		match intersect_entities pos ed.state with
 		| Some(e, prop) -> update ed e prop pos
-		| None -> (
-			let l = panel_entities ed.size in
-			try
-				let e = List.find (intersect_entity pos) l in
-				let ed = {ed with state = e::ed.state} in
-				update ed e Position pos
-			with Not_found -> ed
-		)
+		| None -> ed
 	)
 	| ({button = true}, {button}) -> (
 		if not button && outside then
@@ -398,7 +391,7 @@ let run size path =
 			size;
 			state;
 			selected = None;
-			selected_property = Position;
+			selected_property = Position vec0;
 		}
 		in
 		Printf.printf "Press w to save, p to play, q to quit\n%!";
