@@ -191,21 +191,22 @@ let rec apply_constraints b sumForces colList linkList =
 let compute_position pos colList linkList =
 	List.fold_left (fun acc e ->
 		match e with
-		| Ball(b) -> pos
+		| Ball(b) ->
+			let d  = direction b.position pos in
+			b.position +: 2. *. Mlgrope.ball_radius *: d
 		| Rope(r) ->
 			if List.mem e linkList && distance pos r.position >= r.length
 			then r.length *: (direction r.position pos) +: r.position
 			else pos
 		| Block(bl) -> let l = Collide.polygon_circle bl.vertices pos Mlgrope.ball_radius in
-			let (a,b) = List.hd l in
+			begin
+			try
+			  let (a,b) =  List.hd l in
 			let n  = Collide.circle_seg_norm a b pos in
-			(-2. *. Mlgrope.ball_radius *: n)
-			(*
-			List.fold_left (fun acc (a,b) ->
-				let n  = Collide.circle_seg_norm a b pos in
-				acc +: (2. *. Mlgrope.ball_radius *: n)
-			) pos l
-			*)
+			(2. *. Mlgrope.ball_radius *: n)
+			with
+				| Failure(_) -> pos
+			end
 		| _ -> pos
 	) pos colList
 
