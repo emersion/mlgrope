@@ -54,7 +54,7 @@ let parse_rope l : rope =
 let parse_elastic l : elastic =
 	let (position, l) = parse_vec l in
 	let (radius, l) = parse_float l in
-	let (length, _) = parse_float l in
+	let (length, l) = parse_float l in
 	let (strength, _) = parse_float l in
 	{position; radius; length; strength}
 

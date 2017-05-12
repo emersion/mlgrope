@@ -31,7 +31,7 @@ let elastic_force d (e : elastic) =
 	(e.strength *. d /. ( e.radius *. e.radius))
 
 let magnet_force d (m : magnet) =
-	( m.strength *. m.radius *. m.radius /. d)
+	(200. *. m.strength *. m.radius *. m.radius /. d)
 
 let remove_from_list o l =
 	List.filter (fun e -> o != e) l
@@ -156,7 +156,7 @@ let compute_reaction pos sumForces colList linkList =
 			else acc
 		| Block(b) -> let l = Collide.polygon_circle b.vertices pos Mlgrope.ball_radius in
 			List.fold_left (fun acc (a,b) ->
-				(projection (sumForces) (b -: a)) +: acc
+				(projection (-1. *: sumForces) (b -: a)) +: acc
 			) sumForces l
 		| _ -> acc
 	) sumForces colList

@@ -67,10 +67,10 @@ let rotate a v =
 let fold_segments f acc l =
 	match l with
 	| h::t ->
-		let (_, acc) = List.fold_left (fun (last, acc) v ->
+		let (last, acc) = List.fold_left (fun (last, acc) v ->
 			(v, f acc (last, v))
 		) (h, acc) t in
-		acc
+		f acc (last, h) (* Close last segment *)
 	| [] -> acc
 
 let average l =

@@ -13,7 +13,7 @@ open Player
 exception Play of game_state
 
 type entity_property =
-	| Position
+	| Position of vec
 	| Radius
 	| Size
 	| Length
@@ -37,9 +37,10 @@ let grid_color = Graphics.rgb 230 230 230
 let handle_size = 10.
 let handle_color = Graphics.black
 
-let handle_props = [Radius; Size; Length; Angle; Strength]
-
 let strength_per_division = 50.
+
+let stick_to_grid pt =
+	Math2d.map (fun k -> grid_size *. round_float (k /. grid_size)) pt
 
 let update_position entity position =
 	match entity with
@@ -71,6 +72,15 @@ let draw_grid size =
 		Graphics.lineto w (i*grid_size)
 	done
 
+let panel_block_vertices pos =
+	let block_size = 10. in
+	[
+		pos +: {x = block_size; y = block_size};
+		pos +: {x = -. block_size; y = block_size};
+		pos +: {x = -. block_size; y = -. block_size};
+		pos +: {x = block_size; y = -. block_size};
+	]
+
 let panel_entities size =
 	let position = {x = size.x +. (panel_width /. 2.); y = 0.} in
 	let radius = 20. in
@@ -82,7 +92,7 @@ let panel_entities size =
 		Elastic{position; radius; length = radius; strength = 1.};
 		Goal{position};
 		Star{position};
-		(* TODO: block *)
+		Block{color = 0xFF69B4; vertices = panel_block_vertices position};
 		Fan{position; size = {x = 30.; y = 20.}; angle = 0.; strength = 1.};
 		Spike{position; angle = 0.5 *. pi};
 	] in
@@ -131,10 +141,15 @@ let angle_handle_position e =
 
 let strength_handle_position e =
 	match e with
-	| Magnet{position; strength} ->
+	| Magnet{position; strength} | Elastic{position; strength} ->
 		position +: {x = strength *. strength_per_division; y = 0.}
 	| Fan{position; angle; strength} ->
 		position +: strength *. strength_per_division *: vec_of_angle angle
+	| _ -> raise Not_found
+
+let vertex_handle_position v e =
+	match e with
+	| Block(_) -> v
 	| _ -> raise Not_found
 
 let handle_position prop e =
@@ -144,6 +159,7 @@ let handle_position prop e =
 	| Length -> length_handle_position e
 	| Angle -> angle_handle_position e
 	| Strength -> strength_handle_position e
+	| Vertex(v) -> vertex_handle_position v e
 	| _ -> raise Not_found
 
 let draw_handle prop e =
@@ -164,10 +180,23 @@ let draw_handle prop e =
 	| _ ->
 		Graphics.fill_rect (x - hs/2) (y - hs/2) hs hs
 
+let handles_of_entity e =
+	match e with
+	| Ball(_) -> []
+	| Bubble(_) -> [Radius]
+	| Magnet(_) -> [Radius; Strength]
+	| Rope(_) -> [Radius; Length]
+	| Elastic(_) -> [Radius; Length; Strength]
+	| Block{vertices} ->
+		List.fold_left (fun props v ->
+			(Vertex v)::props
+		) [] vertices
+	| Spike(_) -> [Angle]
+	| Fan(_) -> [Size; Angle; Strength]
+	| Goal(_) | Star(_) -> []
+
 let draw_handles e =
-	List.iter (fun prop ->
-		try draw_handle prop e with Not_found -> ()
-	) handle_props
+	List.iter (fun prop -> draw_handle prop e) (handles_of_entity e)
 
 let draw_entity e =
 	Frontend.draw_entity e;
@@ -178,9 +207,6 @@ let step ed =
 	draw_panel ed.size;
 	List.iter draw_entity ed.state;
 	ed
-
-let stick_to_grid pt =
-	Math2d.map (fun k -> grid_size *. round_float (k /. grid_size)) pt
 
 let intersect_entity pt entity =
 	match entity with
@@ -207,10 +233,8 @@ let intersect_entity pt entity =
 
 let intersect_handles pt e =
 	List.find (fun prop ->
-		try
-			Collide.circle_point (handle_position prop e) (handle_size /. 2.) pt
-		with Not_found -> false
-	) handle_props
+		Collide.circle_point (handle_position prop e) (handle_size /. 2.) pt
+	) (handles_of_entity e)
 
 let rec intersect_entities pt state =
 	match state with
@@ -220,7 +244,7 @@ let rec intersect_entities pt state =
 			Some(e, prop)
 		with Not_found ->
 			if intersect_entity pt e then
-				Some(e, Position)
+				Some(e, Position (pt -: position_of_entity e))
 			else
 				intersect_entities pt state
 	)
@@ -272,22 +296,32 @@ let update_strength entity position =
 	let strength = copysign (d /. strength_per_division) (position.x -. ep.x) in
 	match entity with
 	| Magnet(m) -> Magnet{m with strength}
+	| Elastic(e) -> Elastic{e with strength}
 	| Fan(f) -> Fan{f with strength}
+	| _ -> entity
+
+let update_vertex entity vertex position =
+	match entity with
+	| Block(b) ->
+		let vertices = List.map (fun v ->
+			if v == vertex then position else v
+		) b.vertices in
+		Block{b with vertices}
 	| _ -> entity
 
 let update ed entity prop position =
 	let ed = {ed with selected_property = prop} in
-	let updated = match prop with
-	| Position -> update_position entity position
-	| Radius -> update_radius entity position
-	| Length -> update_length entity position
-	| Size -> update_size entity position
-	| Angle -> update_angle entity position
-	| Strength -> update_strength entity position
-	| _ -> entity
+	let (updated, selected_property) = match prop with
+	| Position(delta) -> (update_position entity (position -: stick_to_grid delta), prop)
+	| Radius -> (update_radius entity position, prop)
+	| Length -> (update_length entity position, prop)
+	| Size -> (update_size entity position, prop)
+	| Angle -> (update_angle entity position, prop)
+	| Strength -> (update_strength entity position, prop)
+	| Vertex(v) -> (update_vertex entity v position, Vertex(position))
 	in
 	let state = List.map (swap_entity entity updated) ed.state in
-	{ed with state; selected = Some(updated)}
+	{ed with state; selected = Some(updated); selected_property}
 
 let remove ed entity =
 	let state = List.filter (fun e -> e != entity) ed.state in
@@ -309,7 +343,7 @@ let handle_event path ed s s' =
 			try
 				let e = List.find (intersect_entity pos) l in
 				let ed = {ed with state = e::ed.state} in
-				update ed e Position pos
+				update ed e (Position (pos -: position_of_entity e)) pos
 			with Not_found -> ed
 		)
 	)
@@ -361,7 +395,7 @@ let run size path =
 			size;
 			state;
 			selected = None;
-			selected_property = Position;
+			selected_property = Position vec0;
 		}
 		in
 		Printf.printf "Press w to save, p to play, q to quit\n%!";
