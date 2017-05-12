@@ -69,6 +69,15 @@ let draw_grid size =
 		Graphics.lineto w (i*grid_size)
 	done
 
+let panel_block_vertices pos =
+	let block_size = 10. in
+	[
+		pos +: {x = block_size; y = block_size};
+		pos +: {x = -. block_size; y = block_size};
+		pos +: {x = -. block_size; y = -. block_size};
+		pos +: {x = block_size; y = -. block_size};
+	]
+
 let panel_entities size =
 	let position = {x = size.x +. (panel_width /. 2.); y = 0.} in
 	let radius = 20. in
@@ -80,7 +89,7 @@ let panel_entities size =
 		Elastic{position; radius; length = radius; stiffness = 1.};
 		Goal{position};
 		Star{position};
-		(* TODO: block *)
+		Block{color = 0xFF69B4; vertices = panel_block_vertices position};
 		Fan{position; size = {x = 30.; y = 20.}; angle = 0.; strength = 1.};
 		Spike{position; angle = 0.5 *. pi};
 	] in
