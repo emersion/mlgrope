@@ -199,15 +199,14 @@ let compute_position pos colList linkList =
 			then r.length *: (direction r.position pos) +: r.position
 			else pos
 		| Block(bl) -> let l = Collide.polygon_circle bl.vertices pos Mlgrope.ball_radius in
-			let (a,b) = List.hd l in
+			begin
+			try
+			  let (a,b) =  List.hd l in
 			let n  = Collide.circle_seg_norm a b pos in
 			(2. *. Mlgrope.ball_radius *: n)
-			(*
-			List.fold_left (fun acc (a,b) ->
-				let n  = Collide.circle_seg_norm a b pos in
-				acc +: (2. *. Mlgrope.ball_radius *: n)
-			) pos l
-			*)
+			with
+				| Failure(_) -> pos
+			end
 		| _ -> pos
 	) pos colList
 
