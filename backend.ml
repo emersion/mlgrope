@@ -28,7 +28,7 @@ let spike_vertices (s : spike) =
 	]
 
 let elastic_force d (e : elastic) =
-	(e.strength *. d /. ( e.radius *. e.radius))
+	(100. *. e.strength *. d /. ( e.radius *. e.radius))
 
 let magnet_force d (m : magnet) =
 	(200. *. m.strength *. m.radius *. m.radius /. d)
@@ -165,7 +165,10 @@ let compute_reaction pos sumForces colList linkList =
 let apply_constraint ball sumForces col linkList =
 	(* if sumForces =: Math2d.vec0 then ball.speed else *)
 	match col with
-	| Ball(b) -> projection b.speed sumForces
+	| Ball(b) ->
+		let d = direction b.position ball.position in
+		let p = projection (ball.speed -: b.speed) sumForces in
+		length (0.5 *:p) *: d
 	| Rope(r) ->
 		if List.mem col linkList && distance ball.position r.position >= r.length
 		then projection ball.speed sumForces
@@ -194,10 +197,15 @@ let compute_position pos colList linkList =
 			then r.length *: (direction r.position pos) +: r.position
 			else pos
 		| Block(bl) -> let l = Collide.polygon_circle bl.vertices pos Mlgrope.ball_radius in
+			let (a,b) = List.hd l in
+			let n  = Collide.circle_seg_norm a b pos in
+			(-2. *. Mlgrope.ball_radius *: n)
+			(*
 			List.fold_left (fun acc (a,b) ->
 				let n  = Collide.circle_seg_norm a b pos in
-				acc +: (Mlgrope.ball_radius *: n)
+				acc +: (2. *. Mlgrope.ball_radius *: n)
 			) pos l
+			*)
 		| _ -> pos
 	) pos colList
 
