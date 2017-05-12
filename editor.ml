@@ -39,6 +39,9 @@ let handle_color = Graphics.black
 
 let strength_per_division = 50.
 
+let stick_to_grid pt =
+	Math2d.map (fun k -> grid_size *. round_float (k /. grid_size)) pt
+
 let update_position entity position =
 	match entity with
 	| Ball(b) -> Ball{b with position}
@@ -205,9 +208,6 @@ let step ed =
 	List.iter draw_entity ed.state;
 	ed
 
-let stick_to_grid pt =
-	Math2d.map (fun k -> grid_size *. round_float (k /. grid_size)) pt
-
 let intersect_entity pt entity =
 	match entity with
 	| Ball{position} ->
@@ -312,7 +312,7 @@ let update_vertex entity vertex position =
 let update ed entity prop position =
 	let ed = {ed with selected_property = prop} in
 	let (updated, selected_property) = match prop with
-	| Position(delta) -> (update_position entity (position -: delta), prop)
+	| Position(delta) -> (update_position entity (position -: stick_to_grid delta), prop)
 	| Radius -> (update_radius entity position, prop)
 	| Length -> (update_length entity position, prop)
 	| Size -> (update_size entity position, prop)
@@ -338,7 +338,14 @@ let handle_event path ed s s' =
 	| ({button = false}, {button = true}) -> (
 		match intersect_entities pos ed.state with
 		| Some(e, prop) -> update ed e prop pos
-		| None -> ed
+		| None -> (
+			let l = panel_entities ed.size in
+			try
+				let e = List.find (intersect_entity pos) l in
+				let ed = {ed with state = e::ed.state} in
+				update ed e (Position (pos -: position_of_entity e)) pos
+			with Not_found -> ed
+		)
 	)
 	| ({button = true}, {button}) -> (
 		if not button && outside then
