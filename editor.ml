@@ -86,7 +86,7 @@ let panel_entities size =
 		Bubble{position; radius};
 		Magnet{position; radius; strength = 1.};
 		Rope{position; radius; length = radius};
-		Elastic{position; radius; length = radius; stiffness = 1.};
+		Elastic{position; radius; length = radius; strength = 1.};
 		Goal{position};
 		Star{position};
 		Block{color = 0xFF69B4; vertices = panel_block_vertices position};

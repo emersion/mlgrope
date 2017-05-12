@@ -28,7 +28,10 @@ let spike_vertices (s : spike) =
 	]
 
 let elastic_force d (e : elastic) =
-	(d/.250. *. e.stiffness)**2.0
+	(e.strength *. d /. ( e.radius *. e.radius))
+
+let magnet_force d (m : magnet) =
+	( m.strength *. m.radius *. m.radius /. d)
 
 let remove_from_list o l =
 	List.filter (fun e -> o != e) l
@@ -131,10 +134,10 @@ let compute_forces pos linkList =
 		| Bubble(bu) -> ({gravity with y = 0.5 *. abs_float gravity.y}::(fst acc), true)
 		| Magnet(m) -> let d = squared_distance m.position pos in
 			let d  = max 10. (abs_float d) in
-			((200. *. m.radius *. m.radius /. d) *: direction pos m.position ::(fst acc), snd acc)
-		| Elastic(e) -> let d = distance pos e.position in
-			if d >= e.length
-			then ((elastic_force d e) *: direction pos e.position ::(fst acc), snd acc)
+			((magnet_force d m) *: direction pos m.position ::(fst acc), snd acc)
+		| Elastic(e) -> let sqd = squared_distance pos e.position in
+			if sqd >= e.length *. e.length
+			then ((elastic_force sqd e) *: direction pos e.position ::(fst acc), snd acc)
 			else acc
 		| Fan(f) -> ((200. *. f.strength ) *: {x = cos f.angle; y = sin f.angle}::(fst acc), snd acc)
 		| _ -> acc
