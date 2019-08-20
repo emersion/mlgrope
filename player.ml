@@ -2,10 +2,7 @@ open Graphics
 
 open Util
 open Math2d
-open Collide
 open Mlgrope
-open Backend
-open Frontend
 
 exception TouchedGoalException of game_state * vec
 exception OutOfBoundsException of game_state
@@ -45,7 +42,7 @@ let is_bubble_at pos ball e =
 
 let is_rope_at lastpos pos ball e =
 	match e with
-	| Rope{position} | Elastic{position} ->
+	| Rope{position; _} | Elastic{position; _} ->
 		is_some (Collide.segments position ball.position lastpos pos)
 	| _ -> false
 
@@ -107,10 +104,10 @@ let handle_click ball lastpos pos =
 
 let handle_event g s s' =
 	match s' with
-	| {button = true; mouse_x; mouse_y} ->
+	| {button = true; _} ->
 		let pos = Frontend.mouse_of_status s' in
 		let lastpos = match s with
-		| {button = true; mouse_x; mouse_y} -> {x = float_of_int mouse_x; y = float_of_int mouse_y}
+		| {button = true; mouse_x; mouse_y; _} -> {x = float_of_int mouse_x; y = float_of_int mouse_y}
 		| _ -> pos
 		in
 		let state = List.map (fun e ->
@@ -119,9 +116,9 @@ let handle_event g s s' =
 			| _ -> e
 		) g.state in
 		{g with state}
-	| {keypressed = true; key = '\027'} -> raise Exit
-	| {keypressed = true; key = ' '} -> {g with paused = not g.paused}
-	| {keypressed = true; key = 'f'} ->
+	| {keypressed = true; key = '\027'; _} -> raise Exit
+	| {keypressed = true; key = ' '; _} -> {g with paused = not g.paused}
+	| {keypressed = true; key = 'f'; _} ->
 		let g = step {g with paused = false} in
 		{g with paused = true}
 	| _ -> g

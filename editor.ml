@@ -1,14 +1,9 @@
-open Sys
 open Graphics
 
 open Util
 open Math2d
-open Collide
 open Mlgrope
-open Backend
 open Frontend
-open Level
-open Player
 
 exception Play of game_state
 
@@ -44,20 +39,20 @@ let stick_to_grid pt =
 
 let update_position entity position =
 	match entity with
-	| Ball(b) -> Ball{b with position}
-	| Bubble(b) -> Bubble{b with position}
-	| Magnet(m) -> Magnet{m with position}
-	| Rope(b) -> Rope{b with position}
-	| Elastic(b) -> Elastic{b with position}
-	| Goal(b) -> Goal{position}
-	| Star(b) -> Star{position}
-	| Block(b) ->
+	| Ball b -> Ball{b with position}
+	| Bubble b -> Bubble{b with position}
+	| Magnet m -> Magnet{m with position}
+	| Rope b -> Rope{b with position}
+	| Elastic b -> Elastic{b with position}
+	| Goal _ -> Goal{position}
+	| Star _ -> Star{position}
+	| Block b ->
 		let center = average b.vertices in
 		let delta = position -: center in
 		let vertices = List.map (fun v -> v +: delta) b.vertices in
 		Block{b with vertices}
-	| Fan(f) -> Fan{f with position}
-	| Spike(s) -> Spike{s with position}
+	| Fan f -> Fan{f with position}
+	| Spike s -> Spike{s with position}
 
 let draw_grid size =
 	let grid_size = int_of_float grid_size in
@@ -112,26 +107,26 @@ let draw_panel size =
 
 let radius_handle_position e =
 	match e with
-	| Bubble{position; radius} | Magnet{position; radius} | Rope{position; radius}
-	| Elastic{position; radius} ->
+	| Bubble{position; radius; _} | Magnet{position; radius; _}
+	| Rope{position; radius; _} | Elastic{position; radius; _} ->
 		position +: {x = radius; y = 0.} (* TODO: draw handle in a corner *)
 	| _ -> raise Not_found
 
 let size_handle_position e =
 	match e with
-	| Fan{position; size; angle} ->
+	| Fan{position; size; angle; _} ->
 		position +: size.x *: (vec_of_angle angle) +: 0.5 *. size.y *: (vec_of_angle (angle -. 0.5 *. pi))
 	| _ -> raise Not_found
 
 let length_handle_position e =
 	match e with
-	| Rope{position; length} | Elastic{position; length} ->
+	| Rope{position; length; _} | Elastic{position; length; _} ->
 		position +: {x = length; y = 0.} (* TODO: draw handle in a corner *)
 	| _ -> raise Not_found
 
 let angle_handle_position e =
 	match e with
-	| Fan{position; size; angle} ->
+	| Fan{position; size; angle; _} ->
 		let r = 0.5 *. size.y in
 		let angle = angle -. 0.5 *. pi in
 		position +: r *: vec_of_angle angle
@@ -141,9 +136,9 @@ let angle_handle_position e =
 
 let strength_handle_position e =
 	match e with
-	| Magnet{position; strength} | Elastic{position; strength} ->
+	| Magnet{position; strength; _} | Elastic{position; strength; _} ->
 		position +: {x = strength *. strength_per_division; y = 0.}
-	| Fan{position; angle; strength} ->
+	| Fan{position; angle; strength; _} ->
 		position +: strength *. strength_per_division *: vec_of_angle angle
 	| _ -> raise Not_found
 
@@ -187,7 +182,7 @@ let handles_of_entity e =
 	| Magnet(_) -> [Radius; Strength]
 	| Rope(_) -> [Radius; Length]
 	| Elastic(_) -> [Radius; Length; Strength]
-	| Block{vertices} ->
+	| Block{vertices; _} ->
 		List.fold_left (fun props v ->
 			(Vertex v)::props
 		) [] vertices
@@ -210,25 +205,25 @@ let step ed =
 
 let intersect_entity pt entity =
 	match entity with
-	| Ball{position} ->
+	| Ball{position; _} ->
 		Collide.circle_point position Mlgrope.ball_radius pt
-	| Goal{position} ->
+	| Goal{position; _} ->
 		let (a, b) = ends_of_box position goal_size in
 		Collide.box_point a b pt
-	| Star{position} ->
+	| Star{position; _} ->
 		let (a, b) = ends_of_box position star_size in
 		Collide.box_point a b pt
-	| Bubble{position; radius} | Rope{position; radius} | Elastic{position; radius}
-	| Magnet{position; radius} ->
+	| Bubble{position; radius; _} | Rope{position; radius; _}
+	| Elastic{position; radius; _} | Magnet{position; radius; _} ->
 		Collide.circle_point position radius pt
-	| Block{vertices} -> Collide.polygon_point vertices pt
-	| Fan{position; size; angle} ->
+	| Block{vertices; _} -> Collide.polygon_point vertices pt
+	| Fan{position; size; angle; _} ->
 		let pt = pt -: position in
 		let pt = rotate angle pt in
 		let a = vec0 -: {x = 0.; y = size.y /. 2.} in
 		let b = a +: size in
 		Collide.box_point a b pt
-	| Spike{position} ->
+	| Spike{position; _} ->
 		Collide.circle_point position (spike_edge_size /. 2.) pt
 
 let intersect_handles pt e =
@@ -335,7 +330,7 @@ let handle_event path ed s s' =
 		update ed e prop pos
 	in
 	match (s, s') with
-	| ({button = false}, {button = true}) -> (
+	| ({button = false; _}, {button = true; _}) -> (
 		match intersect_entities pos ed.state with
 		| Some(e, prop) -> update ed e prop pos
 		| None -> (
@@ -347,7 +342,7 @@ let handle_event path ed s s' =
 			with Not_found -> ed
 		)
 	)
-	| ({button = true}, {button}) -> (
+	| ({button = true; _}, {button; _}) -> (
 		if not button && outside then
 			match ed.selected with
 			| Some(e) -> remove ed e
@@ -359,15 +354,15 @@ let handle_event path ed s s' =
 			in
 			if button then ed else {ed with selected = None}
 	)
-	| (_, {keypressed = true; key = 'q'}) ->
+	| (_, {keypressed = true; key = 'q'; _}) ->
 		raise Exit
-	| (_, {keypressed = true; key = 'w'}) ->
+	| (_, {keypressed = true; key = 'w'; _}) ->
 		let ch = open_out path in
 		Level.output ch ed.state;
 		close_out ch;
 		Printf.printf "Saved %s\n%!" path;
 		ed
-	| (_, {keypressed = true; key = 'p'}) ->
+	| (_, {keypressed = true; key = 'p'; _}) ->
 		raise (Play ed.state)
 	| _ -> ed
 

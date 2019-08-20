@@ -1,5 +1,3 @@
-open Graphics
-
 open Math2d
 
 type bubble = {
@@ -78,11 +76,12 @@ let ball_radius = 20.0
 
 let position_of_entity e =
 	match e with
-	| Ball{position} | Bubble{position} | Rope{position} | Goal{position}
-	| Elastic{position} | Star{position} | Fan{position} | Spike{position}
-	| Magnet{position} ->
+	| Ball{position; _} | Bubble{position; _} | Rope{position; _}
+	| Goal{position; _}
+	| Elastic{position; _} | Star{position; _} | Fan{position; _} | Spike{position; _}
+	| Magnet{position; _} ->
 		position
-	| Block{vertices} -> average vertices
+	| Block{vertices; _} -> average vertices
 
 (* Returns a function that updates a ball, to be used with List.map *)
 let swap_ball ball updated =

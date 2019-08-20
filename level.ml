@@ -1,6 +1,3 @@
-open String
-open Graphics
-
 open Math2d
 open Mlgrope
 
@@ -31,39 +28,39 @@ let parse_color l : (Graphics.color * string list) =
 	(i, l)
 
 let parse_ball l : ball =
-	let (position, l) = parse_vec l in
+	let position, _ = parse_vec l in
 	{position; speed = vec0; links = []; previous_links = [];}
 
 let parse_bubble l : bubble =
-	let (position, l) = parse_vec l in
-	let (radius, l) = parse_float l in
+	let position, _ = parse_vec l in
+	let radius, _ = parse_float l in
 	{position; radius}
 
 let parse_magnet l : magnet =
 	let (position, l) = parse_vec l in
 	let (radius, l) = parse_float l in
-	let (strength, l) = parse_float l in
+	let strength, _ = parse_float l in
 	{position; radius; strength}
 
 let parse_rope l : rope =
 	let (position, l) = parse_vec l in
 	let (radius, l) = parse_float l in
-	let (length, l) = parse_float l in
+	let length, _ = parse_float l in
 	{position; radius; length}
 
 let parse_elastic l : elastic =
 	let (position, l) = parse_vec l in
 	let (radius, l) = parse_float l in
 	let (length, l) = parse_float l in
-	let (strength, l) = parse_float l in
+	let strength, _ = parse_float l in
 	{position; radius; length; strength}
 
 let parse_goal l : goal =
-	let (position, l) = parse_vec l in
+	let position, _ = parse_vec l in
 	{position}
 
 let parse_star l : star =
-	let (position, l) = parse_vec l in
+	let position, _ = parse_vec l in
 	{position}
 
 let parse_block l : block =
@@ -75,12 +72,12 @@ let parse_fan l : fan =
 	let (position, l) = parse_vec l in
 	let (size, l) = parse_vec l in
 	let (angle, l) = parse_float l in
-	let (strength, l) = parse_float l in
+	let strength, _ = parse_float l in
 	{position; size; angle; strength}
 
 let parse_spike l : spike =
 	let (position, l) = parse_vec l in
-	let (angle, l) = parse_float l in
+	let angle, _ = parse_float l in
 	{position; angle}
 
 let parse_entity t l =

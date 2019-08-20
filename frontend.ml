@@ -1,12 +1,9 @@
 open Graphics
-open Sys
 open Unix
 
 open Util
-open Image
 open Math2d
 open Mlgrope
-open Backend
 
 let tick_rate = 1. /. 60.
 
@@ -171,7 +168,7 @@ let create_rope_line a b l =
 let draw_link b l =
 	match l with
 	| Bubble(bubble) -> draw_bubble {bubble with position = b.position}
-	| Rope{position; length} | Elastic{position; length} ->
+	| Rope{position; length; _} | Elastic{position; length; _} ->
 		let line = build_poly_line (
 			try create_rope_line position b.position length
 			with _ -> create_line position b.position

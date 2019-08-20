@@ -1,4 +1,3 @@
-open String
 open Graphics
 
 open Util

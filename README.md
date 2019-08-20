@@ -6,7 +6,7 @@ Cut the Rope - MLG version
 
 ## Building
 
-Requires Linux and OCaml 4.04+.
+Requires Linux, OCaml 4.04+ and dune.
 
 ```shell
 make

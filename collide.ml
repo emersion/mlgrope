@@ -12,7 +12,7 @@ let line_equation a b =
 
 let line_point a b pos =
 	if a.x = b.x then a.x = pos.x else
-	let (k, y0, f) = line_equation a b in
+	let _, _, f = line_equation a b in
 	abs_float ((f pos.x) -. pos.y) <= 5.
 
 let line_vertical a b x =
@@ -84,10 +84,10 @@ let polygon_point l pos =
 	) 0 l in
 	n mod 2 = 1
 
-let polygon_line l a b =
+let polygon_line _ _ _ =
 	None (* TODO *)
 
-let polygon_segment l a b =
+let polygon_segment _ _ _ =
 	None (* TODO *)
 
 let polygon_circle l center radius =

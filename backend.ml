@@ -33,15 +33,6 @@ let elastic_force d (e : elastic) =
 let magnet_force d (m : magnet) =
 	(200. *. m.strength *. m.radius *. m.radius /. d)
 
-let remove_from_list o l =
-	List.filter (fun e -> o != e) l
-
-let find_bubble l =
-	List.exists (fun e -> match e with | Bubble(_) -> true | _ -> false) l
-
-let find_rope l =
-	List.exists (fun e -> match e with | Rope(_) -> true | _ -> false) l
-
 let clear_entities col entl =
 	List.fold_left (fun acc e ->
 		match e with
@@ -82,7 +73,7 @@ let check_collision pos ent =
 	| _ -> false
 
 (* Add links that needs to be added according to collisions *)
-let rec add_links_collision col links =
+let add_links_collision col links =
 	List.fold_left (fun acc e ->
 		match e with
 		| Bubble(_) | Star(_) -> e::acc
@@ -131,7 +122,7 @@ let update_links ball entl col =
 let compute_forces pos linkList =
 	let (forceList,isBubble) = List.fold_left (fun acc e ->
 		match e with
-		| Bubble(bu) -> ({gravity with y = 0.5 *. abs_float gravity.y}::(fst acc), true)
+		| Bubble _ -> ({gravity with y = 0.5 *. abs_float gravity.y}::(fst acc), true)
 		| Magnet(m) -> let d = squared_distance m.position pos in
 			let d  = max 10. (abs_float d) in
 			((magnet_force d m) *: direction pos m.position ::(fst acc), snd acc)
@@ -175,7 +166,7 @@ let apply_constraint ball sumForces col linkList =
 		else ball.speed
 	| Block(bl) ->
 		let l = Collide.polygon_circle bl.vertices ball.position Mlgrope.ball_radius in
-		List.fold_left (fun acc (a,b) ->
+		List.fold_left (fun _ (a,b) ->
 			let n  = Collide.circle_seg_norm a b ball.position in
 			Math2d.reflect ball.speed n
 		) sumForces l
@@ -189,7 +180,7 @@ let rec apply_constraints b sumForces colList linkList =
 
 (* Collsion response -> position *)
 let compute_position pos colList linkList =
-	List.fold_left (fun acc e ->
+	List.fold_left (fun _ e ->
 		match e with
 		| Ball(b) ->
 			let d  = direction b.position pos in

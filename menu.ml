@@ -1,16 +1,9 @@
-open String
-open Sys
 open Graphics
 
 open Util
-open Image
 open Math2d
-open Collide
 open Mlgrope
 open Frontend
-open Level
-open Player
-open Editor
 
 exception PlayLevel of game_state
 exception EditLevel of string
@@ -51,7 +44,7 @@ let draw_arrow size dir =
 	let (x, y) = ints_of_vec (arrow_corner size dir) in
 	Graphics.draw_image (if dir < 0 then arrow_left_img () else arrow_right_img ()) x y
 
-let draw_level size name state =
+let draw_level _ name state =
 	Frontend.draw state;
 	Graphics.set_color Graphics.black;
 	Graphics.moveto 0 0;
@@ -86,9 +79,9 @@ let switch_level m delta =
 	let selected_level = load_level m.levels.(selected_index) in
 	{m with selected_index; selected_level}
 
-let handle_event m s s' =
+let handle_event m _ s' =
 	match s' with
-	| {button = true} ->
+	| {button = true; _} ->
 		let pos = mouse_of_status s' in
 		let delta =
 			if collide_arrow m.size (-1) pos then -1
@@ -96,12 +89,12 @@ let handle_event m s s' =
 			else raise (PlayLevel m.selected_level)
 		in
 		switch_level m delta
-	| {keypressed = true; key = 'p'} -> raise (PlayLevel m.selected_level)
-	| {keypressed = true; key = 'e'} ->
+	| {keypressed = true; key = 'p'; _} -> raise (PlayLevel m.selected_level)
+	| {keypressed = true; key = 'e'; _} ->
 		raise (EditLevel (level_path m.levels.(m.selected_index)))
-	| {keypressed = true; key = '<'} -> switch_level m (-1)
-	| {keypressed = true; key = '>'} -> switch_level m 1
-	| {keypressed = true; key = '\027'} -> raise Exit
+	| {keypressed = true; key = '<'; _} -> switch_level m (-1)
+	| {keypressed = true; key = '>'; _} -> switch_level m 1
+	| {keypressed = true; key = '\027'; _} -> raise Exit
 	| _ -> m
 
 let rec run size =
@@ -124,14 +117,14 @@ let rec run size =
 				Frontend.draw state;
 				draw_sunglasses m.size pos t
 			in
-			let handle_event () s s' =
+			let handle_event () _ s' =
 				match s' with
-				| {button = true} -> run size
-				| {keypressed = true; key = '\027'} -> raise Exit
+				| {button = true; _} -> run size
+				| {keypressed = true; key = '\027'; _} -> raise Exit
 				| _ -> ()
 			in
 			Frontend.run step handle_event size ()
-		| Player.OutOfBoundsException(state) -> run size
+		| Player.OutOfBoundsException _ -> run size
 	)
 	| EditLevel(path) -> (
 		try Editor.run size path with
