@@ -5,4 +5,7 @@ all:
 clean:
 	dune clean
 
+indent:
+	ocamlformat -i src/*.ml
+
 .PHONY: all clean
